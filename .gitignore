@@ -50,3 +50,5 @@ a.out
 *.dyn_o
 *.hi-boot
 *.o-boot
+*.json
+.vscode
