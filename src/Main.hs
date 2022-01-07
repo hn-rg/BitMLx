@@ -13,6 +13,15 @@ import GHC.TypeLits
 import Control.Monad.ST
 import Data.Function
 import Data.Bifunctor as DB
+import qualified Data.Vector as V
+
+
+{-
+        ooooooooofffff I 've made a mistake I guess
+        participants should commit different secrets for different blockchains
+        check syntax !!!
+-}
+
 
 
 {- _____ Goal _____
@@ -29,14 +38,14 @@ import Data.Bifunctor as DB
   2. EACH participant gives an extra deposit of value (n-1) * u 
         / n = # participants, u = initial balance of the contract
 -}
-
+tCheat = 100
 
 check :: Gx -> Int -> Int -> Vb -> Vd -> [Pname] -> Bool
 check g n m u1 u2 p =
         let x = checkSec g m [] 
         in 
                 let y = checkCol g n u1 u2 [] 
-                in fst x && sameElems (snd x) p && fst y && sameElems (snd y) p
+                in fst x && sameElems (snd x) p  && fst y && sameElems (snd y) p
         
         where 
         checkSec :: Gx -> Int -> [Pname] -> (Bool, [Pname])
@@ -51,6 +60,33 @@ check g n m u1 u2 p =
         checkCol (DepCol p (u1,u2) (x1,x2) ) n ub ud ps =  (u1 == (n-1)*ub && u2 == (n-1)*ud , p:ps) 
         checkCol _ _ _ _ ps                             = (True, ps)                                     
 
+
+compileC :: Cx -> Vb -> Vd -> Vb -> Vd -> Int -> Int -> [Pname] -> Level -> V.Vector Sname -> (C, C)
+compileC (PriChoice (Solox (Withdrawx p)) d) ub ud ubCol udCol n m ps i s = 
+        let         
+            -- here should be UbCol/n but I get a typecheck error bc Int is not instance of Fractional, will check on that later
+            d'  = Solo (Split ([ub]++[ubCol | i <- [1..n]]) ([Solo (Withdraw p)] ++ [Solo (Withdraw i) | i <- ps]) )    -- bitcoin  
+            dx' = Solo (Split ([ud]++[udCol | i <- [1..n]]) ([Solo (Withdraw p)] ++ [Solo (Withdraw i) | i <- ps]) )    -- dogecoin
+            
+            d   = Solo ( Reveal ( [s V.! (i-1)] ) d' )            -- bitcoin
+            dx  = Solo ( Reveal ( [s V.! (i-1)] ) dx' )           -- dogecoin
+            
+            -- this is the first big choice of the compiled contract, where everything goes as expected, 2 remainning oooof
+            d1  = concatChoices d' s n m i 2 d                 -- bitcoin
+            d1x = concatChoices dx' s n m i 2 dx                -- dogecoin
+        in (d1,d1x)
+compileC  (Solox (Withdrawx p) ) ub ud ubCol udCol n m ps i s = (Solo (Withdraw p), Solo (Withdraw p))
+
+
+-- i is level counter
+-- j is participant counter
+-- n is the number of participants,
+-- m is the number of prichoices
+concatChoices :: C -> V.Vector Sname -> Int -> Int -> Int -> Int -> C -> C
+concatChoices d s n m i j prev 
+        | j < n     = Choice prev (concatChoices d s n m i (j+1) prev')
+        | otherwise = prev'        
+        where prev' = Choice prev (Solo (Reveal  ( [s V.! (i-1 + m * (j-1))] ) d ) ) 
 
 -- number of participants in the contract
 nPar ::  Gx -> Int -> Int
@@ -77,19 +113,25 @@ nPriChoice :: Cx -> Int
 nPriChoice (PriChoice cx1 cx2) = 1 + nPriChoice cx1 + nPriChoice cx2
 nPriChoice _                   = 0
 
-
+lSecrets :: Gx -> V.Vector Sname -> V.Vector Sname
+lSecrets (SecGx gx1 gx2) v   = let v' = V.empty :: V.Vector Sname
+                               in  (lSecrets gx1 v') V.++ (lSecrets gx2 v)
+lSecrets (SecretPlus p xs) v = let xs' = map fst xs in V.fromList xs' V.++ v
+lSecrets _ v                 = v                           
 
 main :: IO ()
 main = do
         let n = nPar g 0
         let (u1,u2) = balance g (0,0)
-        let m = nPriChoice c
+        let m = nPriChoice cSimpleTest
         let p = lPar g []
-        print p
+        let v = lSecrets g V.empty
         let t = check g n m u1 u2 p
-        print t
-
+        let c' = compileC cSimpleTest u1 u2 2 2 n m p 1 v
+        print c'
 -- auxiliary stuff
+
+
 
 when :: MonadFail m => Bool -> m a -> m a
 when True p  = p

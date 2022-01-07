@@ -31,11 +31,14 @@ d1 :: Dx
 d1 = Revealifx ["a","b"] (Peq (Elength "a") (Elength "a") )  (Solox (Withdrawx "A"))
 
 d2 :: Dx
-d2 = Revealifx ["a","b"] (Pnot (Peq (Elength "a") (Elength "b")) )  (Solox (Withdrawx "A"))  -- "a" and "b" are names not values!
+d2 = Revealifx ["a","b"] (Pnot (Peq (Elength "a") (Elength "b")) )  (Solox (Withdrawx "B"))  -- "a" and "b" are names not values!
 
 c :: Cx
 c = PriChoice (Solox d1) (Solox d2)
 
 adv :: GCx
-adv = Adv p1 g c
+adv = Advx p1 g c
+
+cSimpleTest :: Cx
+cSimpleTest = PriChoice (Solox (Withdrawx "A")) (Solox (Withdrawx "B"))
 -- end of example 1
