@@ -17,11 +17,17 @@ g2 :: Gx
 g2 = SecGx
         ( SecGx
                 (DepCol "A" (2,2) ("x1col","x2col"))                    -- give collaterals
-                (SecretPlus "A" [("s1Ab", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875thg")] )   -- A's extra secret for bitcoin
+                (SecGx
+                        (SecretPlusB "A" [("s1Ab", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875thg")] )   -- A's extra secret for bitcoin
+                        (SecretPlusD "A" [("s1Ad", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875hjk")] )   -- A's extra secret for bitcoin
+                )
         )
         ( SecGx
                 (DepCol "B" (2,2) ("y1col","y2col"))
-                (SecretPlus "B" [("s1Bd", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7859133")] )
+                ( SecGx
+                        (SecretPlusB "B" [("s1Bb", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7859133")] )
+                        (SecretPlusD "B" [("s1Bd", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7859567")] )
+                )
         )
 
 g :: Gx

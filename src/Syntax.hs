@@ -50,7 +50,8 @@ data Gx = Depx Pname (Vb,Vd) (Xb,Xd)
         | VolDepx Pname (Vb,Vd) (Xb,Xd)
         | Secretx Pname Sname Shash
         | DepCol Pname (Vb,Vd) (Xb,Xd)
-        | SecretPlus Pname [(Sname, Shash)]
+        | SecretPlusB Pname [(Sname, Shash)]
+        | SecretPlusD Pname [(Sname, Shash)]
         | SecGx Gx Gx
         deriving (Eq,Show)
 

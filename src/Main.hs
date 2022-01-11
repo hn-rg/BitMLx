@@ -6,6 +6,8 @@
 
 import Syntax
 import Examples
+import Trifunctor
+
 import Data.Char
 import Data.List
 import GHC.TypeLits
@@ -13,6 +15,7 @@ import GHC.TypeLits
 import Control.Monad.ST
 import Data.Function
 import Data.Bifunctor as DB
+
 import qualified Data.Vector as V
 
 
@@ -42,21 +45,23 @@ tCheat = 100
 
 check :: Gx -> Int -> Int -> Vb -> Vd -> [Pname] -> Bool
 check g n m u1 u2 p =
-        let x = checkSec g m [] 
-        in 
-                let y = checkCol g n u1 u2 [] 
-                in fst x && sameElems (snd x) p  && fst y && sameElems (snd y) p
+        let x = checkSec g m [] []
+            y = checkCol g n u1 u2 []
+        in (^&&) $ DB.bimap (fst x &&) (sameElems p ) y
         
         where 
-        checkSec :: Gx -> Int -> [Pname] -> (Bool, [Pname])
-        checkSec (SecGx gx1 gx2) m ps   =   let (b1,b2) = (checkSec gx1 m [], checkSec gx2 m ps)
-                                            in DB.bimap (fst b1 &&) (snd b1 ++) b2
-        checkSec (SecretPlus p xs) m ps =   (length xs == m, p:ps)
-        checkSec _ _ ps                 =   (True,ps)
+        checkSec :: Gx -> Int -> [Pname] -> [Pname] -> (Bool, [Pname], [Pname])
+        checkSec (SecGx gx1 gx2) m ps ps'   =  let b1 = checkSec gx1 m [] []
+                                                   b2 = checkSec gx2 m ps ps'
+                                               in trimap (fst' b1 &&) (snd' b1 ++) (thrd b1 ++) b2                   -- trimap f g h (x,y) = (f x, g y, h z)
+        checkSec (SecretPlusB p xs) m ps ps' =   (length xs == m, p:ps, ps')
+        checkSec (SecretPlusD p xs) m ps ps' =   (length xs == m, ps, p:ps')
+        checkSec _ _ ps ps'                  =   (True, ps, ps')
 
         checkCol :: Gx -> Int -> Vb -> Vd -> [Pname] -> (Bool, [Pname])
-        checkCol (SecGx gx1 gx2) n u1 u2 ps             =  let (b1,b2) = (checkCol gx1 n u1 u2 [], checkCol gx2 n u1 u2 ps)
-                                                           in DB.bimap (fst b1 &&) (snd b1 ++) b2
+        checkCol (SecGx gx1 gx2) n u1 u2 ps             =  let b1 = checkCol gx1 n u1 u2 []
+                                                               b2 = checkCol gx2 n u1 u2 ps
+                                                           in DB.bimap (fst b1 &&) (snd b1 ++) b2                       
         checkCol (DepCol p (u1,u2) (x1,x2) ) n ub ud ps =  (u1 == (n-1)*ub && u2 == (n-1)*ud , p:ps) 
         checkCol _ _ _ _ ps                             = (True, ps)                                     
 
@@ -113,22 +118,27 @@ nPriChoice :: Cx -> Int
 nPriChoice (PriChoice cx1 cx2) = 1 + nPriChoice cx1 + nPriChoice cx2
 nPriChoice _                   = 0
 
-lSecrets :: Gx -> V.Vector Sname -> V.Vector Sname
-lSecrets (SecGx gx1 gx2) v   = let v' = V.empty :: V.Vector Sname
-                               in  (lSecrets gx1 v') V.++ (lSecrets gx2 v)
-lSecrets (SecretPlus p xs) v = let xs' = map fst xs in V.fromList xs' V.++ v
-lSecrets _ v                 = v                           
+lSecrets :: Gx -> V.Vector Sname -> V.Vector Sname -> (V.Vector Sname, V.Vector Sname)
+lSecrets (SecGx gx1 gx2) v1 v2    = let v' = V.empty :: V.Vector Sname
+                                        (v1, v2)   = lSecrets gx1 v' v'
+                                        (v1', v2') = lSecrets gx2 v1 v2
+                                    in  (v1 V.++ v1', v2 V.++ v2')      
+lSecrets (SecretPlusB p xs) v1 v2 = let xs' = map fst xs in (V.fromList xs' V.++ v1, v2)
+lSecrets (SecretPlusD p xs) v1 v2 = let xs' = map fst xs in (v1, V.fromList xs' V.++ v2)
+lSecrets _ v1 v2                  = (v1,v2)                           
 
 main :: IO ()
 main = do
-        let n = nPar g 0
-        let (u1,u2) = balance g (0,0)
-        let m = nPriChoice cSimpleTest
-        let p = lPar g []
-        let v = lSecrets g V.empty
-        let t = check g n m u1 u2 p
-        let c' = compileC cSimpleTest u1 u2 2 2 n m p 1 v
-        print c'
+        let 
+            v = V.empty
+            n = nPar g 0                        -- number of participants
+            (u1,u2) = balance g (0,0)           -- balance of contract
+            m = nPriChoice cSimpleTest          -- number of priority choices
+            p = lPar g []                       -- list of participants' names
+            (v1,v2) = lSecrets g v v            -- list (vector) of secrets' names
+            t = check g n m u1 u2 p             -- check if contract preconditions are well defined
+            c' = compileC cSimpleTest u1 u2 2 2 n m p 1 v1               -- compile contract
+        print t
 -- auxiliary stuff
 
 
@@ -144,3 +154,15 @@ when False _ = fail "when failed"
 -- even if they do not appear in the same order
 sameElems :: (Eq a) => [a] -> [a] -> Bool
 sameElems x y = null (x \\ y) && null (y \\ x)
+
+(^&&) :: (Bool, Bool) -> Bool
+(^&&) (x,y) = x && y
+
+fst' :: (a,a,a) -> a
+fst' (x,y,z) = x
+
+snd' :: (a,a,a) -> a
+snd' (x,y,z) = y
+
+thrd :: (a,a,a) -> a
+thrd (x,y,z) = z
