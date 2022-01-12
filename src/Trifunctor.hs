@@ -1,9 +1,6 @@
--- | An incomplete implementation of an extension of the 'Functor' and
--- 'Traversable' concepts to three type arguments.  I've implemented
--- enough for our purposes here.
+
 module Trifunctor(
     Trifunctor(..),
-    Tritraversable(..)
 ) where
 
 import Control.Monad(liftM3)
@@ -12,11 +9,11 @@ import Control.Monad(liftM3)
 -- are missing analogies to the functions 'first' and 'second' found
 -- in "Data.Bifunctor".)
 class Trifunctor f where
-    -- | Maps over all three arguments simultaneously
-    trimap :: (a -> a') -> (b -> b') -> (c -> c') -> f a b c -> f a' b' c'
+  trimap :: (a -> a') -> (b -> b') -> (c -> c') -> (f a b c -> f a' b' c')
 
 instance Trifunctor (,,) where
-    trimap fa fb fc (a, b, c) = (fa a, fb b, fc c)
+  trimap f g h (x,y,z) = (f x, g y, h z)
+
 
 -- | Extends the 'Traversable' concept to three type arguments.
 -- (Note: we are missing analogies to the functions 'bitraverse',
@@ -29,3 +26,4 @@ class Tritraversable t where
 
 instance Tritraversable (,,) where
     trisequence (ma, mb, mc) = liftM3 (,,) ma mb mc
+
