@@ -143,8 +143,8 @@ nPriChoice _                   = 0
 -- where n the number of participants and m the number of priority choices
 -- indexing the vector as  i * m / 0 <= i <= n
 -- gives as the first secret commited (the secret for the first level) by each user
-lSecrets :: Gx -> V.Vector (Sname, Pname) -> V.Vector (Sname, String) -> (V.Vector (Sname, String), V.Vector (Sname, String))
-lSecrets (SecGx gx1 gx2) v1 v2    = let v' = V.empty :: V.Vector (Sname, String)
+lSecrets :: Gx -> V.Vector (Sname, Pname) -> V.Vector (Sname, Pname) -> (V.Vector (Sname, Pname), V.Vector (Sname, Pname))
+lSecrets (SecGx gx1 gx2) v1 v2    = let v' = V.empty :: V.Vector (Sname, Pname)
                                         (v1', v2')   = lSecrets gx1 v' v'
                                         (v1'', v2'') = lSecrets gx2 v1 v2
                                     in  (v1' V.++ v1'', v2' V.++ v2'')      
