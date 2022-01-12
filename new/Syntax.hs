@@ -1,6 +1,5 @@
 module Syntax where
 
---      BitMLx Syntax
 type Pname = String
 
 type PK = String
@@ -25,7 +24,18 @@ type Level = Int
 
 type Time = Int
 
-type Gl = [Gx]
+
+-- |     BitMLx Syntax
+
+-- list participants in contract
+type Pl = [P]
+
+-- list of contract preconditions
+type Gxl = [Gx]
+
+-- contract
+type Cx = [Dx]
+
 
 -- predicate
 data Pred   = PTrue
@@ -42,9 +52,8 @@ data E  = Eint Integer
         | Esub E E
         deriving (Eq,Show)
 
--- participants in contract
+-- participant in contract
 data P =  Par Pname PK
-        | SecPar P P
         deriving (Eq,Show)
 
 -- contract preconditions
@@ -54,7 +63,6 @@ data Gx = Depx Pname (Vb,Vd) (Xb,Xd)
         | DepCol Pname (Vb,Vd) (Xb,Xd)
         | SecretPlusB Pname [(Sname, Shash)]
         | SecretPlusD Pname [(Sname, Shash)]
-        | SecGx Gx Gx
         deriving (Eq,Show)
 
 -- guarded contract
@@ -68,24 +76,24 @@ data Dx = Putx [(Xb,Xd)] Cx
         | Splitx [(Vb,Vd)] [Cx]
         deriving (Eq,Show)
 
--- contract
-data Cx = Solox Dx
-        | PriChoice Cx Cx
-        deriving (Eq,Show)
 
  -- contract advertisement
-data GCx = Advx P Gx Cx
+data GCx = Advx Pl Gxl Cx
 
 --- end of BitMLx syntax ---
 
 
 ---     BitML// syntax
 
+-- list of contract preconditions
+type Gl = [G]
+
+type C = [D]
+
 -- contract preconditions
 data G  = Dep Pname V X
         | VolDep Pname V X
         | Secret Pname Sname Shash
-        | SecG Gx Gx
         deriving (Eq,Show)
 
 -- guarded contract
@@ -100,11 +108,6 @@ data D  = Put [X] C
         | After Time D
         deriving (Eq,Show)
 
--- contract
-data C  = Solo D
-        | Choice C C            -- it could not be defined as Choice D D, bc if that was the case we could not have more than 2 choices each time
-        deriving (Eq,Show)
-
  -- contract advertisement
-data GC = Adv P G C
+data GC = Adv Pl Gl C
        

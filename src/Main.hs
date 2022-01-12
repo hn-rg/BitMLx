@@ -87,7 +87,6 @@ compileC (PriChoice (Solox (Withdrawx p)) d) ub ud ubCol udCol n m ps i s1 s2 =
         in (d1,d1x)
 compileC  (Solox (Withdrawx p) ) ub ud ubCol udCol n m ps i s1 s2 = (Solo (Withdraw p), Solo (Withdraw p))
 
--- | check 1st line's comment!!!! -> DONE
 
 -- | i is level counter
 -- j is participant counter
@@ -171,7 +170,7 @@ main = do
             c' = compileC cSimpleTest u1 u2 col1 col2 n m p 1 v1 v2     -- compile contract
         --print v1
         --print v2
-       -- print t
+        print m
         when t (print c')
         -- print c' 
 
