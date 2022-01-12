@@ -18,6 +18,9 @@ import Data.Bifunctor as DB
 
 import qualified Data.Vector as V
 
+-- | vector of secrets should include except for the secrets' names 
+-- also the participants' names !!
+
 -- | fixed i guess
 {-
         ooooooooofffff I 've made a mistake I guess
@@ -77,16 +80,27 @@ compileC (PriChoice (Solox (Withdrawx p)) d) ub ud ubCol udCol n m ps i s1 s2 =
             dx  = Solo ( Reveal ( [s2 V.! (i-1)] ) dx' )           -- dogecoin
             
             -- | this is the first big choice of the compiled contract, where everything goes as expected, 2 remainning oooof
-            d1  = concatChoices d' s1 n m i 2 d                 -- bitcoin
+            d1  = concatChoices d' s1 n m i 2 d                  -- bitcoin
             d1x = concatChoices dx' s2 n m i 2 dx                -- dogecoin
+
+            
         in (d1,d1x)
 compileC  (Solox (Withdrawx p) ) ub ud ubCol udCol n m ps i s1 s2 = (Solo (Withdraw p), Solo (Withdraw p))
 
+-- | check 1st line's comment!!!!
+--cheatCase :: [Pname] -> Int -> Int -> V.Vector Sname -> Level -> C
+--cheatCase ps u ucol s level = 
 
 -- | i is level counter
 -- j is participant counter
 -- n is the number of participants,
 -- m is the number of prichoices
+
+-- | this function takes as input a contract and a vector of secrets
+-- and creates a new contract
+-- which consist of as many guarded contracts as the number of secrets
+-- each participant can stipulate the initial contract 
+-- providing her secret
 concatChoices :: C -> V.Vector Sname -> Int -> Int -> Int -> Int -> C -> C
 concatChoices d s n m i j prev 
         | j < n     = Choice prev (concatChoices d s n m i (j+1) prev')
@@ -113,32 +127,47 @@ balance (SecGx gx1 gx2)         (n1,n2) = balance gx1 (n1,n2) ^+ balance gx2 (n1
 balance (Depx _ (vb,vd) (_,_) ) (n1,n2) = (n1+vb, n2+vd)
 balance _                       (n1,n2) = (n1,n2)
 
+collateral :: Gx -> (Vb,Vd) -> (Vb,Vd)
+collateral (SecGx gx1 gx2)           (n1,n2) = collateral gx1 (n1,n2) ^+ collateral gx2 (n1,n2)
+collateral (DepCol _ (vb,vd) (_,_) ) (n1,n2) = (n1+vb, n2+vd)
+collateral _                         (n1,n2) = (n1,n2)
+
 
 nPriChoice :: Cx -> Int
 nPriChoice (PriChoice cx1 cx2) = 1 + nPriChoice cx1 + nPriChoice cx2
 nPriChoice _                   = 0
 
-lSecrets :: Gx -> V.Vector Sname -> V.Vector Sname -> (V.Vector Sname, V.Vector Sname)
-lSecrets (SecGx gx1 gx2) v1 v2    = let v' = V.empty :: V.Vector Sname
-                                        (v1, v2)   = lSecrets gx1 v' v'
-                                        (v1', v2') = lSecrets gx2 v1 v2
-                                    in  (v1 V.++ v1', v2 V.++ v2')      
-lSecrets (SecretPlusB p xs) v1 v2 = let xs' = map fst xs in (V.fromList xs' V.++ v1, v2)
-lSecrets (SecretPlusD p xs) v1 v2 = let xs' = map fst xs in (v1, V.fromList xs' V.++ v2)
+-- | this function takes as input a G describing contract preconditions
+-- and outputs 2 vectors of extra secrets as describind in the following lines
+-- each vector has length n * m 
+-- where n the number of participants and m the number of priority choices
+-- indexing the vector as  i * m / 0 <= i <= n
+-- gives as the first secret commited (the secret for the first level) by each user
+lSecrets :: Gx -> V.Vector (Sname, Pname) -> V.Vector (Sname, String) -> (V.Vector (Sname, String), V.Vector (Sname, String))
+lSecrets (SecGx gx1 gx2) v1 v2    = let v' = V.empty :: V.Vector (Sname, String)
+                                        (v1', v2')   = lSecrets gx1 v' v'
+                                        (v1'', v2'') = lSecrets gx2 v1 v2
+                                    in  (v1' V.++ v1'', v2' V.++ v2'')      
+lSecrets (SecretPlusB p xs) v1 v2 = let xs' = map (updateTuple2 p) xs in (V.fromList xs' V.++ v1, v2)
+lSecrets (SecretPlusD p xs) v1 v2 = let xs' = map (updateTuple2 p) xs in (v1, V.fromList xs' V.++ v2)
 lSecrets _ v1 v2                  = (v1,v2)                           
 
 main :: IO ()
 main = do
         let 
-            v = V.empty                         -- init empty vector
+            v = V.empty :: V.Vector (Sname,Pname)                       -- init empty vector
             n = nPar g 0                        -- number of participants
             (u1,u2) = balance g (0,0)           -- balance of contract
+            (col1,col2) = collateral g (0,0)    -- collaterals commited
             m = nPriChoice cSimpleTest          -- number of priority choices
             p = lPar g []                       -- list of participants' names
             (v1,v2) = lSecrets g v v            -- list (vector) of secrets' names
-            t = check g n m u1 u2 p             -- check if contract preconditions are well defined
-            c' = compileC cSimpleTest u1 u2 2 2 n m p 1 v1 v2              -- compile contract
-        print t
+            --t = check g n m u1 u2 p             -- check if contract preconditions are well defined
+            --c' = compileC cSimpleTest u1 u2 col1 col2 n m p 1 v1 v2 
+                         -- compile contract
+        print v1
+        print v2
+        --print t
         -- print c' 
 
 
@@ -164,6 +193,8 @@ sameElems x y = null (x \\ y) && null (y \\ x)
 (^&&&) :: (Bool, Bool, Bool) -> Bool
 (^&&&) (x,y,z) = x && y && z
 
+updateTuple2 :: c -> (a,b) -> (a,c)
+updateTuple2 z (x,y)  = (x,z)
 
 -- | check https://hackage.haskell.org/package/tuple-0.2.0.1/docs/src/Data-Tuple-Select.html#sel1
 -- and https://hackage.haskell.org/package/lens-5.1/docs/Control-Lens-Tuple.html
