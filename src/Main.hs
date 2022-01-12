@@ -69,15 +69,15 @@ check g n m u1 u2 p =
         checkCol _ _ _ _ ps                             = (True, ps)                                     
 
 
-compileC :: Cx -> Vb -> Vd -> Vb -> Vd -> Int -> Int -> [Pname] -> Level -> V.Vector Sname -> V.Vector Sname -> (C, C)
+compileC :: Cx -> Vb -> Vd -> Vb -> Vd -> Int -> Int -> [Pname] -> Level -> V.Vector (Sname,Pname) -> V.Vector (Sname,Pname) -> (C, C)
 compileC (PriChoice (Solox (Withdrawx p)) d) ub ud ubCol udCol n m ps i s1 s2 = 
         let         
             -- | here should be UbCol/n but I get a typecheck error bc Int is not instance of Fractional, will check on that later
             d'  = Solo (Split ([ub]++[ubCol | i <- [1..n]]) ([Solo (Withdraw p)] ++ [Solo (Withdraw i) | i <- ps]) )    -- bitcoin  
             dx' = Solo (Split ([ud]++[udCol | i <- [1..n]]) ([Solo (Withdraw p)] ++ [Solo (Withdraw i) | i <- ps]) )    -- dogecoin
             
-            d   = Solo ( Reveal ( [s1 V.! (i-1)] ) d' )            -- bitcoin
-            dx  = Solo ( Reveal ( [s2 V.! (i-1)] ) dx' )           -- dogecoin
+            d   = Solo ( Reveal ( [fst $ s1 V.! (i-1)] ) d' )            -- bitcoin
+            dx  = Solo ( Reveal ( [fst $ s2 V.! (i-1)] ) dx' )           -- dogecoin
             
             -- | this is the first big choice of the compiled contract, where everything goes as expected, 2 remainning oooof
             d1  = concatChoices d' s1 n m i 2 d                  -- bitcoin
@@ -101,11 +101,11 @@ compileC  (Solox (Withdrawx p) ) ub ud ubCol udCol n m ps i s1 s2 = (Solo (Withd
 -- which consist of as many guarded contracts as the number of secrets
 -- each participant can stipulate the initial contract 
 -- providing her secret
-concatChoices :: C -> V.Vector Sname -> Int -> Int -> Int -> Int -> C -> C
+concatChoices :: C -> V.Vector (Sname,Pname) -> Int -> Int -> Int -> Int -> C -> C
 concatChoices d s n m i j prev 
         | j < n     = Choice prev (concatChoices d s n m i (j+1) prev')
         | otherwise = prev'        
-        where prev' = Choice prev (Solo (Reveal  ( [s V.! (i-1 + m * (j-1))] ) d ) ) 
+        where prev' = Choice prev (Solo (Reveal  ( [fst $ s V.! (i-1 + m * (j-1))] ) d ) ) 
 
 -- | number of participants in the contract
 nPar ::  Gx -> Int -> Int
@@ -162,12 +162,12 @@ main = do
             m = nPriChoice cSimpleTest          -- number of priority choices
             p = lPar g []                       -- list of participants' names
             (v1,v2) = lSecrets g v v            -- list (vector) of secrets' names
-            --t = check g n m u1 u2 p             -- check if contract preconditions are well defined
-            --c' = compileC cSimpleTest u1 u2 col1 col2 n m p 1 v1 v2 
-                         -- compile contract
-        print v1
-        print v2
-        --print t
+            t = check g n m u1 u2 p             -- check if contract preconditions are well defined
+            c' = compileC cSimpleTest u1 u2 col1 col2 n m p 1 v1 v2     -- compile contract
+        --print v1
+        --print v2
+       -- print t
+        when t (print c')
         -- print c' 
 
 
