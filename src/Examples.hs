@@ -26,7 +26,7 @@ g2 = SecGx
                 (DepCol "B" (2,2) ("y1col","y2col"))
                 ( SecGx
                         (SecretPlusB "B" [("s1Bb", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7859133")] )
-                        (SecretPlusD "A" [("s1Bd", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7859567")] )
+                        (SecretPlusD "B" [("s1Bd", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7859567")] )
                 )
         )
 

@@ -87,9 +87,14 @@ compileC (PriChoice (Solox (Withdrawx p)) d) ub ud ubCol udCol n m ps i s1 s2 =
         in (d1,d1x)
 compileC  (Solox (Withdrawx p) ) ub ud ubCol udCol n m ps i s1 s2 = (Solo (Withdraw p), Solo (Withdraw p))
 
--- | check 1st line's comment!!!!
---cheatCase :: [Pname] -> Int -> Int -> V.Vector Sname -> Level -> C
---cheatCase ps u ucol s level = 
+-- | check 1st line's comment!!!! -> DONE
+
+-- | i is level counter
+-- j is participant counter
+-- n is the number of participants,
+-- m is the number of prichoices
+cheatCase :: [Pname] -> Int -> Int -> V.Vector (Sname,Pname) -> Level -> Int -> Int ->  C
+cheatCase ps u ucol s i m j = Solo $ Reveal [fst $ s V.! ( i-1 + m * (j-1) ) ] $ Solo $ Withdraw "A"
 
 -- | i is level counter
 -- j is participant counter
@@ -141,7 +146,7 @@ nPriChoice _                   = 0
 -- and outputs 2 vectors of extra secrets as describind in the following lines
 -- each vector has length n * m 
 -- where n the number of participants and m the number of priority choices
--- indexing the vector as  i * m / 0 <= i <= n
+-- indexing the vector as  i * m / 0 <= i <= n - 1
 -- gives as the first secret commited (the secret for the first level) by each user
 lSecrets :: Gx -> V.Vector (Sname, Pname) -> V.Vector (Sname, Pname) -> (V.Vector (Sname, Pname), V.Vector (Sname, Pname))
 lSecrets (SecGx gx1 gx2) v1 v2    = let v' = V.empty :: V.Vector (Sname, Pname)
@@ -169,7 +174,6 @@ main = do
        -- print t
         when t (print c')
         -- print c' 
-
 
 -- | auxiliary stuff
 
