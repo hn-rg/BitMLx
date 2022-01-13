@@ -24,7 +24,7 @@ tCheat = 100
 
 
 -- | i is level counter
--- j is participant counter
+-- j is participant counter (IMPORTANT: INIT VALUE -> 1)
 -- n is the number of participants,
 -- m is the number of prichoices
 
@@ -105,7 +105,7 @@ main = do
             (s1,s2) = lSecrets g1 v v            -- list (vector) of secrets' names
             t = check g1 n m u1 u2 p             -- check if contract preconditions are well defined
             -- c' = compileC cSimpleTest u1 u2 col1 col2 n m p 1 v1 v2     -- compile contract
-
+            con = concatChoices [Withdraw "A"] s1 n m 1 1 
         print c1
         print g1
         print (u1, u2)
@@ -114,6 +114,7 @@ main = do
         print p
         print (s1, s2)
         print t
+        print con
 
        -- when t (print c')
 
