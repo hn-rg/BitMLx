@@ -5,7 +5,7 @@ import Examples
 import Trifunctor
 
 import Data.Char
-import Data.List
+import Data.List hiding (sort)
 import GHC.TypeLits
 
 import Control.Monad.ST
@@ -14,6 +14,7 @@ import Data.Bifunctor as DB
 
 import qualified Data.Vector as V
 
+import qualified Data.Vector.Algorithms.Intro as I
 {- _____ Goal _____
 
         BitMLx ---> / preprocessing / ---> / compilation / ---> BitML||
@@ -26,12 +27,16 @@ level = 1
 
 
 compileC :: Cx -> Vb -> Vd -> Vb -> Vd -> Int -> Int 
-        -> [Pname] -> Level -> V.Vector (Sname,Pname) 
-        -> V.Vector (Sname,Pname) -> Time 
+        -> [Pname] -> Level 
+        -> V.Vector (Pname, Sname) 
+        -> V.Vector (Pname, Sname) 
+        -> V.Vector (Pname, Vb)
+        -> V.Vector (Pname, Vd)
+        -> Time 
         -> (C, C)
-compileC (Withdrawx p : [] ) ub ud ubCol udCol n m ps i s1 s2 t = ( [Withdraw p], [Withdraw p] )
+--compileC (Withdrawx p : [] ) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t = ( [Withdraw p], [Withdraw p] )
 
-compileC ( Withdrawx p : d ) ub ud ubCol udCol n m ps i s1 s2 t = 
+compileC ( Withdrawx p : d ) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t = 
         let         
             d'  = Split ( [ub] ++ [ubCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps] )   -- bitcoin  
             dx' = Split ( [ud] ++ [udCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps]  )  -- dogecoin
@@ -40,11 +45,13 @@ compileC ( Withdrawx p : d ) ub ud ubCol udCol n m ps i s1 s2 t =
             d1  = concatChoices [d'] s1 n m i 1                  -- bitcoin
             d1x = concatChoices [dx'] s2 n m i 1                -- dogecoin
             
-            d2  = cheatCase ps n ub ubCol s2 i m 1 t
-            d2x = cheatCase ps n ud udCol s1 i m 1 t
+            d2  = cheatCase ps n ub ubCol dep1 s2 i m 1 t
+            d2x = cheatCase ps n ud udCol dep2 s1 i m 1 t
 
-            
-        in (d1++d2,d1x++d2x)
+            d = d1 ++ d2
+            dx = d1x ++ d2x
+
+        in (d, dx)
 
 
 -- | i is level counter, j is participant counter (IMPORTANT: INIT VALUE -> 1)
@@ -53,31 +60,33 @@ compileC ( Withdrawx p : d ) ub ud ubCol udCol n m ps i s1 s2 t =
 -- | this function takes as input a contract and a vector of secrets and creates a new contract
 -- which consist of as many guarded contracts as the number of participants
 -- each participant can stipulate the initial contract, providing her secret
-concatChoices :: C -> V.Vector (Sname,Pname) -> Int -> Int -> Int -> Int -> C
+concatChoices :: C -> V.Vector (Pname, Sname) -> Int -> Int -> Int -> Int -> C
 concatChoices d s n m i j 
-        | j <= n    = Reveal [fst $ s V.! (i - 1 + m * (j - 1) ) ] d : concatChoices d s n m i (j + 1)
+        | j <= n    = Reveal [snd $ s V.! (i - 1 + m * (j - 1) ) ] d : concatChoices d s n m i (j + 1)
         | otherwise = []        
 
 
 -- | i is level counter, j is participant counter
 -- n is the number of participants, m is the number of prichoices
-cheatCase ::  [Pname] -> Int -> Int -> Int -> V.Vector (Sname,Pname) -> Level -> Int -> Int -> Time -> C
-cheatCase ps n u ucol s i m j t
-        | j <= n   = k : cheatCase ps n u ucol s i m (j + 1) t
+cheatCase ::  [Pname] -> Int -> Int -> Int 
+        -> V.Vector (Pname, Int) -> V.Vector (Pname, Sname) 
+        -> Level -> Int -> Int -> Time -> C
+cheatCase ps n u ucol dep s i m j t
+        | j <= n   = k : cheatCase ps n u ucol dep s i m (j + 1) t
         |otherwise = []
-   where k = After t (Reveal [fst $ s V.! p] 
-                        [ Split  [ ucol `div` (n-1) | i <-  ps' ]        -- add deposit of Pi
-                         [ [Withdraw i] | (_,i) <- ps' ] ] )   -- see *** below
+   where k = After t (Reveal [snd $ s V.! p] 
+                        [ Split  [ i + ucol `div` (n-1) | (_,i) <- ps'   ]        -- add deposit of Pi -> done
+                         [ [Withdraw i] | (i,_) <- ps'' ] ] )   -- see *** below
          p = i - 1 + m * (j - 1)
-         ps' = vecCompr p s
+         ps' = vecCompr p dep
+         ps'' = vecCompr p s
 -- | *** participants list should be extracted from lSecrets so as the order of appearance is the same in both.
 
-dep :: [(Pname, Int)] -> Pname -> Int
-dep ((x, u) : ps) y 
-        | x == y = u
-        | otherwise = dep ps y
+-- | 1st. list with names and deposits, 2nd. a name from lSecrets list
+-- | we want to find which deposit has 2nd in 1st
 
-vecCompr :: Int -> V.Vector (Sname,Pname) -> [(Sname,Pname)]
+
+vecCompr :: Int -> V.Vector (Pname, a) -> [(Pname, a)]
 vecCompr p s = let v = V.take p s V.++ V.drop (p+1) s 
                 in V.toList v
 
@@ -112,10 +121,10 @@ check g n m u1 u2 p =
 -- | balance of the contract
 -- mind that we have one for bitcoin, one for dogecoin
 -- so the balance is a tuple of balances, for now
-balCol :: Gxl -> Vb -> Vd -> Vb -> Vd -> [(Pname, Vb)] -> [(Pname, Vd)] 
-        -> (Vb, Vd, Vb, Vd, [(Pname, Vb)], [(Pname, Vd)])
+balCol :: Gxl -> Vb -> Vd -> Vb -> Vd -> V.Vector (Pname, Vb) -> V.Vector (Pname, Vd)
+        -> (Vb, Vd, Vb, Vd, V.Vector (Pname, Vb), V.Vector (Pname, Vb))
 balCol []                            n1 n2 col1 col2 p1 p2 = (n1, n2, col1, col2, p1, p2)
-balCol (Depx p (vb,vd) (_,_) : xs)   n1 n2 col1 col2 p1 p2 = balCol xs (n1 + vb) (n2 + vd) col1 col2 ((p,vb):p1) ((p,vd):p2)
+balCol (Depx p (vb,vd) (_,_) : xs)   n1 n2 col1 col2 p1 p2 = balCol xs (n1 + vb) (n2 + vd) col1 col2 (V.cons (p,vb) p1) (V.cons (p,vd) p2)
 balCol (DepCol p (vb,vd) (_,_) : xs) n1 n2 col1 col2 p1 p2 = balCol xs n1 n2 (col1 + vb) (col2 + vd) p1 p2
 balCol ( _ : xs)                     n1 n2 col1 col2 p1 p2 = balCol xs n1 n2 col1 col2 p1 p2
 
@@ -124,7 +133,7 @@ balCol ( _ : xs)                     n1 n2 col1 col2 p1 p2 = balCol xs n1 n2 col
 -- and outputs 2 vectors of extra secrets as describind in the following lines
 -- each vector has length n * m, where n the number of participants and m the number of priority choices
 -- indexing the vector as  i * m / 0 <= i <= n - 1, gives as the first secret commited (the secret for the first level) by each user
-lSecrets :: Gxl -> V.Vector (Sname, Pname) -> V.Vector (Sname, Pname) -> (V.Vector (Sname, Pname), V.Vector (Sname, Pname))
+lSecrets :: Gxl -> V.Vector (Pname, Sname) -> V.Vector (Pname, Sname) -> (V.Vector (Pname, Sname), V.Vector (Pname, Sname))
 lSecrets []                       v1 v2 = (v1, v2)      
 lSecrets ( SecretPlusB p s : xs ) v1 v2 = let s' = map (updateTuple2 p) s in lSecrets xs (V.fromList s' V.++ v1) v2
 lSecrets ( SecretPlusD p s : xs ) v1 v2 = let s' = map (updateTuple2 p) s in lSecrets xs v1 (V.fromList s' V.++ v2)
@@ -134,26 +143,31 @@ lSecrets ( _ : xs )               v1 v2 = lSecrets xs v1 v2
 main :: IO ()
 main = do
         let 
-            v = V.empty :: V.Vector (Sname,Pname)                       -- init empty vector
+            -- | get all initial values we need
+            v = V.empty :: V.Vector (Pname, Sname) 
+            v1 = V.empty :: V.Vector (Pname, Vb)
+            v2 = V.empty :: V.Vector (Pname, Vb)                      -- init empty vectors
+
             n = length p1                        -- number of participants
-            (u1, u2, col1, col2, dep1, dep2) = balCol g1 0 0 0 0 [] []           -- balance of contract + collaterals
+            (u1, u2, col1, col2, dep1, dep2) = balCol g1 0 0 0 0 v1 v2           -- balance of contract + collaterals
             m = length cSimpleTest - 1           -- number of priority choices
             p = map (\ (Par x y) -> x) p1        -- list of participants' names
             (s1,s2) = lSecrets g1 v v            -- list (vector) of secrets' names
-            t = check g1 n m u1 u2 p             -- check if contract preconditions are well defined
-            c' = compileC cSimpleTest u1 u2 col1 col2 n m p level s1 s2 tInit  -- compile contract
-        {-print c1
-        print g1
-        print (u1, u2)
-        print (col1, col2)
-        print m 
-        print p
-        print (s1, s2)
-        print t
-        -}
+            
+            -- | sort participants list, secrets vectors, deposits vectors according to participants names
+            p' = sortList p
+            s1' = sortVec s1
+            s2' = sortVec s2
+            dep1' = sortVec dep1
+            dep2' = sortVec dep2
 
+            -- | check well formness and then if well formed compile
+            t = check g1 n m u1 u2 p             -- check if contract preconditions are well defined
+            c' = compileC cSimpleTest u1 u2 col1 col2 n m p' level s1' s2' dep1' dep2' tInit  -- compile contract
+       
         when t (print $ fst c')
         when t (print $ snd c')
+        
 
 -- auxiliary stuff
 
@@ -175,8 +189,8 @@ sameElems x y = null (x \\ y) && null (y \\ x)
 (^&&&) :: (Bool, Bool, Bool) -> Bool
 (^&&&) (x,y,z) = x && y && z
 
-updateTuple2 :: c -> (a,b) -> (a,c)
-updateTuple2 z (x,y)  = (x,z)
+updateTuple2 :: c -> (a,b) -> (c,a)
+updateTuple2 z (x,y)  = (z,x)
 
 -- | check https://hackage.haskell.org/package/tuple-0.2.0.1/docs/src/Data-Tuple-Select.html#sel1
 -- and https://hackage.haskell.org/package/lens-5.1/docs/Control-Lens-Tuple.html
@@ -188,3 +202,10 @@ snd' (_,y,_) = y
 
 thd :: (a,b,c) -> c
 thd (_,_,z) = z
+
+sortVec :: Ord a => V.Vector (a,b) -> V.Vector (a,b)
+sortVec = V.modify $ I.sortBy ( compare `on` fst )
+
+sortList :: Ord a => [a] -> [a]
+sortList = V.toList . V.modify I.sort . V.fromList
+
