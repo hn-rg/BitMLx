@@ -3,13 +3,14 @@ module Main where
 import Syntax
 import Examples
 import Trifunctor
+import Auxiliary
 
 import Data.Char
-import Data.List hiding (sort)
+--import Data.List hiding (sort)
 import GHC.TypeLits
 
 import Control.Monad.ST
-import Data.Function
+--import Data.Function
 import Data.Bifunctor as DB
 
 import qualified Data.Vector as V
@@ -21,9 +22,14 @@ import qualified Data.Vector.Algorithms.Intro as I
    ________________
 -}
 
-tCheat = 100
-tInit = 1
-level = 1
+-- | initial values
+tCheat = 100                            -- extra time given to check if someone has cheated
+tInit = 1                               -- initial time
+level = 1                               -- initial level
+bal = 0                                 -- initial balance
+v = V.empty :: V.Vector (Pname, Sname)  -- for secrets
+v1 = V.empty :: V.Vector (Pname, Vb)    -- for bitcoin deposits
+v2 = V.empty :: V.Vector (Pname, Vb)    -- for othercoin deposits
 
 
 compileC :: Cx -> Vb -> Vd -> Vb -> Vd -> Int -> Int 
@@ -34,7 +40,7 @@ compileC :: Cx -> Vb -> Vd -> Vb -> Vd -> Int -> Int
         -> V.Vector (Pname, Vd)
         -> Time 
         -> (C, C)
---compileC (Withdrawx p : [] ) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t = ( [Withdraw p], [Withdraw p] )
+compileC (Withdrawx p : [] ) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t = ( [Withdraw p], [Withdraw p] )
 
 compileC ( Withdrawx p : d ) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t = 
         let         
@@ -48,10 +54,15 @@ compileC ( Withdrawx p : d ) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =
             d2  = cheatCase ps n ub ubCol dep1 s2 i m 1 t
             d2x = cheatCase ps n ud udCol dep2 s1 i m 1 t
 
-            d = d1 ++ d2
-            dx = d1x ++ d2x
+            (d3, d3x) = compileC d ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t
+            d3'  = map (\x -> After (i * t + tCheat) x) d3
+            d3x' = map (\x -> After (i * t + tCheat) x) d3x
 
-        in (d, dx)
+            dnew  = d1 ++ d2 ++ d3'
+            dnewx = d1x ++ d2x ++ d3x'
+
+        in (dnew, dnewx)
+-- compileC ()        
 
 
 -- | i is level counter, j is participant counter (IMPORTANT: INIT VALUE -> 1)
@@ -74,9 +85,10 @@ cheatCase ::  [Pname] -> Int -> Int -> Int
 cheatCase ps n u ucol dep s i m j t
         | j <= n   = k : cheatCase ps n u ucol dep s i m (j + 1) t
         |otherwise = []
-   where k = After t (Reveal [snd $ s V.! p] 
-                        [ Split  [ i + ucol `div` (n-1) | (_,i) <- ps'   ]        -- add deposit of Pi -> done
-                         [ [Withdraw i] | (i,_) <- ps'' ] ] )   -- see *** below
+   
+   where k = After (i * t) (Reveal [snd $ s V.! p] 
+                                [ Split  [ i + ucol `div` (n-1) | (_,i) <- ps'   ]        -- add deposit of Pi -> done
+                                        [ [Withdraw i] | (i,_) <- ps'' ] ] )   -- see *** below
          p = i - 1 + m * (j - 1)
          ps' = vecCompr p dep
          ps'' = vecCompr p s
@@ -143,13 +155,8 @@ lSecrets ( _ : xs )               v1 v2 = lSecrets xs v1 v2
 main :: IO ()
 main = do
         let 
-            -- | get all initial values we need
-            v = V.empty :: V.Vector (Pname, Sname) 
-            v1 = V.empty :: V.Vector (Pname, Vb)
-            v2 = V.empty :: V.Vector (Pname, Vb)                      -- init empty vectors
-
             n = length p1                        -- number of participants
-            (u1, u2, col1, col2, dep1, dep2) = balCol g1 0 0 0 0 v1 v2           -- balance of contract + collaterals
+            (u1, u2, col1, col2, dep1, dep2) = balCol g1 bal bal bal bal v1 v2           -- balance of contract + collaterals
             m = length cSimpleTest - 1           -- number of priority choices
             p = map (\ (Par x y) -> x) p1        -- list of participants' names
             (s1,s2) = lSecrets g1 v v            -- list (vector) of secrets' names
@@ -161,51 +168,11 @@ main = do
             dep1' = sortVec dep1
             dep2' = sortVec dep2
 
-            -- | check well formness and then if well formed compile
+            -- | check well formness and then IF well formed -> compile
             t = check g1 n m u1 u2 p             -- check if contract preconditions are well defined
             c' = compileC cSimpleTest u1 u2 col1 col2 n m p' level s1' s2' dep1' dep2' tInit  -- compile contract
        
         when t (print $ fst c')
         when t (print $ snd c')
         
-
--- auxiliary stuff
-
-when :: MonadFail m => Bool -> m a -> m a
-when True p  = p
-when False _ = fail "when failed"
-
-(^+) :: Num a => (a,a) -> (a,a) -> (a,a)
-(x1,x2) ^+ (y1,y2) = (x1+y1, x2+y2)
-
--- | checks if two lists have the same elements, 
--- even if they do not appear in the same order
-sameElems :: (Eq a) => [a] -> [a] -> Bool
-sameElems x y = null (x \\ y) && null (y \\ x)
-
-(^&&) :: (Bool, Bool) -> Bool
-(^&&) (x,y) = x && y
-
-(^&&&) :: (Bool, Bool, Bool) -> Bool
-(^&&&) (x,y,z) = x && y && z
-
-updateTuple2 :: c -> (a,b) -> (c,a)
-updateTuple2 z (x,y)  = (z,x)
-
--- | check https://hackage.haskell.org/package/tuple-0.2.0.1/docs/src/Data-Tuple-Select.html#sel1
--- and https://hackage.haskell.org/package/lens-5.1/docs/Control-Lens-Tuple.html
-fst' :: (a,b,c) -> a
-fst' (x,_,_) = x
-
-snd' :: (a,b,c) -> b
-snd' (_,y,_) = y
-
-thd :: (a,b,c) -> c
-thd (_,_,z) = z
-
-sortVec :: Ord a => V.Vector (a,b) -> V.Vector (a,b)
-sortVec = V.modify $ I.sortBy ( compare `on` fst )
-
-sortList :: Ord a => [a] -> [a]
-sortList = V.toList . V.modify I.sort . V.fromList
 
