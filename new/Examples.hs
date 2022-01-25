@@ -23,8 +23,8 @@ g1 = [  Depx "A" (1, 1) ("x1", "x2"),
 
 
 c1 :: Cx
-c1 =  [ Revealifx ["a","b"] (Peq (Elength "a") (Elength "a") )  [ Withdrawx "A" ] ,
-        Revealifx ["a","b"] (Pnot (Peq (Elength "a") (Elength "b")) )  [ Withdrawx "B" ]   -- "a" and "b" are names not values!
+c1 =  [ Revealifx ["a","b"] (Peq (Elength "a") (Elength "a") )  [ Withdrawx "B", Withdrawx "A", Withdrawx "B" ] ,
+        Revealifx ["a","b"] (Pnot (Peq (Elength "a") (Elength "b")) )  [ Withdrawx "B", Withdrawx "A" ]   -- "a" and "b" are names not values!
       ]  
 
 adv :: GCx
