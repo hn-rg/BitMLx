@@ -169,7 +169,7 @@ main = do
             dep2' = sortVec dep2
 
             -- | check well formness and then IF well formed -> compile
-            t = check g1 n m u1 u2 p             -- check if contract preconditions are well defined
+            t  = check g1 n m u1 u2 p             -- check if contract preconditions are well defined
             c' = compileC cSimpleTest u1 u2 col1 col2 n m p' level s1' s2' dep1' dep2' tInit  -- compile contract
        
         when t (print $ fst c')
