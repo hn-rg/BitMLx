@@ -32,7 +32,13 @@ v = V.empty :: V.Vector (Pname, Sname)  -- for secrets
 v1 = V.empty :: V.Vector (Pname, Vb)    -- for bitcoin deposits
 v2 = V.empty :: V.Vector (Pname, Vb)    -- for othercoin deposits
 
-
+-- | INPUTS:
+-- | contract C, bitcoin's balance ub, dogecoin's balance ud, bitcoin's collaterals ubCol, dogecoin's collaterals ubCol, 
+-- | # participants n, # priority choices m, list of participants ps, current level of execution i,
+-- | secrets vector for bitcoin s1, secrets vector for dogecoin s2
+-- | deposits vector for bitcoin s1, deposits vector for dogecoin s2
+-- | current time t
+-- 
 compileC :: Cx -> Vb -> Vd -> Vb -> Vd -> Int -> Int
         -> [Pname] -> Level
         -> V.Vector (Pname, Sname)
@@ -41,21 +47,62 @@ compileC :: Cx -> Vb -> Vd -> Vb -> Vd -> Int -> Int
         -> V.Vector (Pname, Vd)
         -> Time
         -> (C, C)
-compileC [Withdrawx p] ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t = ( [Withdraw p], [Withdraw p] )
-
-compileC ( Withdrawx p : d ) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =
+compileC [Withdrawx p] ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t = 
+        let
+            d'  = Split ( ub : [ubCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps] )   -- bitcoin  
+            dx' = Split ( ud : [udCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps]  )  -- dogecoin
+        in ([d'],[dx'])    
+compileC ( Withdrawx p : d) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =
         let
             d'  = Split ( ub : [ubCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps] )   -- bitcoin  
             dx' = Split ( ud : [udCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps]  )  -- dogecoin
 
-            -- | this is the first big choice of the compiled contract, where everything goes as expected, 2 remainning oooof
+            -- | this is the first big choice of the compiled contract, where everything goes as expected, 2 remainning 
             d1  = concatChoices [d'] s1 n m i 1                  -- bitcoin
             d1x = concatChoices [dx'] s2 n m i 1                -- dogecoin
 
             d2  = cheatCase ps n ub ubCol dep1 s2 i m 1 t
             d2x = cheatCase ps n ud udCol dep2 s1 i m 1 t
 
-            (d3, d3x) = compileC d ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t
+            (d3, d3x) = compileC d ub ud ubCol udCol n m ps (i+1) s1 s2 dep1 dep2 (i*t + tCheat)
+            d3'  = map (After (i * t + tCheat)) d3
+            d3x' = map (After (i * t + tCheat)) d3x
+
+            dnew  = d1  ++ d2 ++ d3'
+            dnewx = d1x ++ d2x ++ d3x'
+
+        in (dnew, dnewx)
+
+
+-- | WE NEED TO CARE about the COLLATERALS bc WE NEED TO KEEP THE INVARIANT Σ ui = balance
+-- | where balance of C = U + COLLATERALS!
+-- | IN THAT SENSE THE FOLLOWING IS WRONG !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+-- | we should compile split in a different way inserting somehow the collaterals in an extra contract
+-- imagine that we have split [1,1] -> [c1,c2]
+-- we do split [1,1, collaterals] -> [compiled-c1, compiled-c2, withdraw-collaterals]
+compileC [Splitx listU listC ] ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t = 
+        let 
+            cs       =  [compileC di ub ud ubCol udCol n m ps (i+1) s1 s2 dep1 dep2 t | di <- listC ]  
+            (c1,c2)  = unzip cs
+            (u1, u2) = unzip listU
+        in ([Split u1 c1 ], [Split u2 c2] )    
+compileC (Splitx listU listC : d) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =   
+        let
+            -- | someone reveals so we execute the first priority choice (split)
+            cs       =  [compileC di ub ud ubCol udCol n m ps (i+1) s1 s2 dep1 dep2 t | di <- listC ]  
+            (c1,c2)  = unzip cs
+            (u1, u2) = unzip listU
+            d'       = Split u1 c1
+            dx'      = Split u2 c2
+
+            -- | this is the first big choice of the compiled contract, where everything goes as expected, 2 remainning 
+            d1  = concatChoices [d'] s1 n m i 1                  -- bitcoin
+            d1x = concatChoices [dx'] s2 n m i 1                -- dogecoin
+            
+            d2  = cheatCase ps n ub ubCol dep1 s2 i m 1 t
+            d2x = cheatCase ps n ud udCol dep2 s1 i m 1 t
+
+            (d3, d3x) = compileC d ub ud ubCol udCol n m ps (i+1) s1 s2 dep1 dep2 (i*t + tCheat)
             d3'  = map (After (i * t + tCheat)) d3
             d3x' = map (After (i * t + tCheat)) d3x
 
@@ -87,16 +134,15 @@ cheatCase ps n u ucol dep s i m j t
         | j <= n   = k : cheatCase ps n u ucol dep s i m (j + 1) t
         |otherwise = []
 
-   where k = After (i * t) (Reveal [snd $ s V.! p]
+   where k = After (i * t) (Reveal [snd $ s V.! p]                              -- check times !!!!!
                                 [ Split  [ i + ucol `div` (n-1) | (_,i) <- ps'   ]        -- add deposit of Pi -> done
-                                        [ [Withdraw i] | (i,_) <- ps'' ] ] )   -- see *** below
+                                        [ [Withdraw i] | (i,_) <- ps' ] ] )   -- see *** below
          p = i - 1 + m * (j - 1)
-         ps' = vecCompr p dep
-         ps'' = vecCompr p s
--- | *** participants list should be extracted from lSecrets so as the order of appearance is the same in both.
+         ps' = vecCompr (j-1) dep
+-- | *** participants list is extracted from deposits list, 
+-- | the order of appearance is the same in deposits list and secrets list, since we have sorted them.
 
--- | 1st. list with names and deposits, 2nd. a name from lSecrets list
--- | we want to find which deposit has 2nd in 1st
+-- | P  is the participant who is checked for cheating
 
 
 vecCompr :: Int -> V.Vector (Pname, a) -> [(Pname, a)]
@@ -188,7 +234,7 @@ main = do
             p = map (\ (Par x y) -> x) p1        -- list of participants' names
             (s1,s2) = lSecrets g1 v v            -- list (vector) of secrets' names
 
-            -- | sort participants list, secrets vectors, deposits vectors according to participants names
+            -- | sort participants list, secrets vectors, deposits vectors according to alphabetical order of participants names
             p' = sortList p
             s1' = sortVec s1
             s2' = sortVec s2
@@ -198,8 +244,8 @@ main = do
             -- | check well formness and then IF well formed -> compile
             t  = check g1 n m u1 u2 p             -- check if contract preconditions are well defined
             c' = compileC cSimpleTest u1 u2 col1 col2 n m p' level s1' s2' dep1' dep2' tInit  -- compile contract
-        print (nPriChoices c1)    
+        when t (print t)
         when t (print $ fst c')
-        when t (print $ snd c')
+        --when t (print $ snd c')
         
 
