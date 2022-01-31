@@ -124,7 +124,12 @@ compileC (Splitx listU listC : d) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =
             cD = d1x ++ d2x ++ d3x'
 
         
--- compileC ()        
+compileC (Authx p d : ds) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =
+        case ds of []        -> (c1, c2)
+                   (_ : xs)  -> (cB, cD) 
+
+        where 
+                
 
 
 -- | i is level counter, j is participant counter (IMPORTANT: INIT VALUE -> 1)
@@ -219,6 +224,10 @@ lSecrets ( SecretPlusB p s : xs ) v1 v2 = let s' = map (updateTuple2 p) s in lSe
 lSecrets ( SecretPlusD p s : xs ) v1 v2 = let s' = map (updateTuple2 p) s in lSecrets xs v1 (V.fromList s' V.++ v2)
 lSecrets ( _ : xs )               v1 v2 = lSecrets xs v1 v2
 
+
+-- | count the number of priority choices recursively for every contract
+-- | even for them which are guarded by a reveal
+-- | and for them created by a split
 nPriChoices ::  Cx  -> Int
 nPriChoices []                       = 0
 nPriChoices [Withdrawx _]            = 0
@@ -240,12 +249,6 @@ nPriChoices (Withdrawx _ : xs)       = 1 + nPriChoices  xs
 nPriChoices (Authx _ _ : xs)         = 1 + nPriChoices xs
 
 
-
-
-
-
-
--- dep :: Gxl -> Vb -> Vd -> (V.Vector (Pname,Vb), V.Vector)
 main :: IO ()
 main = do
         let
