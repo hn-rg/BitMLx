@@ -52,21 +52,31 @@ compileC ( Withdrawx p : d) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =
         case d of []       -> (c1, c2)
                   
                   (x : _)  -> (cB, cD)
-        where          
+        where   
+            -- | if we have no other priority choice following (d == []), we take that choice without revealing any extra secret    
             c1  = [ Split ( ub : [ubCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps] ) ]   -- bitcoin  
             c2  = [ Split ( ud : [udCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps]  ) ] -- dogecoin
            
             -- | this is the first big choice of the compiled contract, where everything goes as expected, 2 remainning 
+            -- | here we just have a choice bewteen actions (reveals). Any user can reveal her extra secret of that level to stipulate c1 (c2 in dogecoin)
+            -- | we concatenate all the possible reveal contracts
+            -- | the number of possible reveals equals to the number of par/ants, the result of "concatChoices" is a list of contracts w\ lentgh n
             d1  = concatChoices c1 s1 n m i 1                  -- bitcoin
             d1x = concatChoices c2 s2 n m i 1                  -- dogecoin
 
+            -- | this is the 2nd big choice of the compiled contract, where we check if someone has cheated
+            -- | we concatenate all the possible cheat cases, where someone has revealed in only one of the two blockchains
+            -- | the number of possible cheat cases equals to the number of par/ants, the result of "cheatCase" is a list of contracts w\ lentgh n  
             d2  = cheatCase ps n ub ubCol dep1 s2 i m 1 t
             d2x = cheatCase ps n ud udCol dep2 s1 i m 1 t
+
+            -- | this is the 3rd big choice of the compiled contract, where noone revealed so we move to the next priority choice to be executed
 
             (d3, d3x) = compileC d ub ud ubCol udCol n m ps (i+1) s1 s2 dep1 dep2 (i*t + tCheat)
             d3'  = map (After (i * t + tCheat)) d3
             d3x' = map (After (i * t + tCheat)) d3x
 
+            -- | compiled contracts in bitcoin and dogecoin
             cB  = d1  ++ d2 ++ d3'
             cD  = d1x ++ d2x ++ d3x'
 
@@ -76,6 +86,7 @@ compileC (Splitx listU listC : d) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =
 
                   (x : _)  -> (cB, cD)
         where
+            -- | we have no other priority choice following (d == []) so we take that choice without revealing an extra secret    
             listCol = [ (n * (n-1) * ui, n * (n-1) * uj ) | (ui, uj) <- listU]  
             listU'  = [ (ui + n * (n-1) * ui, uj + n * (n-1) * uj ) | (ui, uj) <- listU]
             cs       =  [compileC di ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t | di <- listC | (ub,ud) <- listU | (ubCol, udCol) <- listCol]  
@@ -84,22 +95,31 @@ compileC (Splitx listU listC : d) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =
 
 
             -- | someone reveals so we execute the first priority choice (split)
+        
             cs'       =  [compileC di ub ud ubCol udCol n m ps (i+1) s1 s2 dep1 dep2 t | di <- listC | (ub,ud) <- listU | (ubCol, udCol) <- listCol]  
             (c1',c2')  = unzip cs'
             d'       = Split u1 c1'
             dx'      = Split u2 c2'
 
             -- | this is the first big choice of the compiled contract, where everything goes as expected, 2 remainning 
+            -- | here we just have a choice bewteen actions (reveals). Any user can reveal her extra secret of that level to stipulate c1 (c2 in dogecoin)
+            -- | we concatenate all the possible reveal contracts
+            -- | the number of possible reveals equals to the number of par/ants, the result of "concatChoices" is a list of contracts w\ lentgh n
             d1  = concatChoices [d'] s1 n m i 1                  -- bitcoin
             d1x = concatChoices [dx'] s2 n m i 1                -- dogecoin
             
+            -- | this is the 2nd big choice of the compiled contract, where we check if someone has cheated
+            -- | we concatenate all the possible cheat cases, where someone has revealed in only one of the two blockchains
+            -- | the number of possible cheat cases equals to the number of par/ants, the result of "cheatCase" is a list of contracts w\ lentgh n  
             d2  = cheatCase ps n ub ubCol dep1 s2 i m 1 t
             d2x = cheatCase ps n ud udCol dep2 s1 i m 1 t
 
+            -- | this is the 3rd big choice of the compiled contract, where noone revealed so we move to the next priority choice to be executed
             (d3, d3x) = compileC d ub ud ubCol udCol n m ps (i+1) s1 s2 dep1 dep2 (i*t + tCheat)
             d3'  = map (After (i * t + tCheat)) d3
             d3x' = map (After (i * t + tCheat)) d3x
-
+            
+            -- | compiled contracts in bitcoin and dogecoin
             cB = d1 ++ d2 ++ d3'
             cD = d1x ++ d2x ++ d3x'
 
@@ -115,8 +135,14 @@ compileC (Splitx listU listC : d) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =
 -- each participant can stipulate the initial contract, providing her secret
 concatChoices :: C -> V.Vector (Pname, Sname) -> Int -> Int -> Int -> Int -> C
 concatChoices d s n m i j
-        | j <= n    = Reveal [snd $ s V.! (i - 1 + m * (j - 1) ) ] d : concatChoices d s n m i (j + 1)
+        | j <= n    = Reveal [snd $ s V.! ((j - 1) * m  + i - 1  ) ] d : concatChoices d s n m i (j + 1)
         | otherwise = []
+-- | vector of secrets can be seen as a 2D array
+-- | rows index is for participants, columns index is for the different levels
+-- | rows index goes up to n, columns index goes up to m
+-- | each time we want to index to the next participants secret we have to add m
+-- for example if we want the secrets of the 3rd participant we add m 3 times => 3*m
+-- if we want the 2nd secret of the 3rd participant we just add 2 => 3*m + 2 
 
 
 -- | i is level counter, j is participant counter
@@ -153,7 +179,7 @@ vecCompr p s = let v = V.take p s V.++ V.drop (p+1) s
 
 check :: Gxl -> Int -> Int -> Vb -> Vd -> [Pname] -> Bool
 check g n m u1 u2 p 
-        | m == 0    = let (b,x) = aux True g n m u1 u2 [] [] []
+        | m == 0    = let (b,x) = aux True g n m u1 u2 [] [] []                 -- no need for extra secrets if we dont have priority choices
                         in b && sameElems p (thd x)
         | otherwise = let (b,x) = aux True g n m u1 u2 [] [] []
                         in  b && (^&&&) ( trimap (sameElems p) (sameElems p ) (sameElems p) x )
