@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# LANGUAGE ParallelListComp #-}
 module Main where
 
 import Syntax
@@ -47,19 +48,17 @@ compileC :: Cx -> Vb -> Vd -> Vb -> Vd -> Int -> Int
         -> V.Vector (Pname, Vd)
         -> Time
         -> (C, C)
-compileC [Withdrawx p] ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t = 
-        let
-            d'  = Split ( ub : [ubCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps] )   -- bitcoin  
-            dx' = Split ( ud : [udCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps]  )  -- dogecoin
-        in ([d'],[dx'])    
-compileC ( Withdrawx p : d) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =
-        let
-            d'  = Split ( ub : [ubCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps] )   -- bitcoin  
-            dx' = Split ( ud : [udCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps]  )  -- dogecoin
-
+compileC ( Withdrawx p : d) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t = 
+        case d of []       -> (c1, c2)
+                  
+                  (x : _)  -> (cB, cD)
+        where          
+            c1  = [ Split ( ub : [ubCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps] ) ]   -- bitcoin  
+            c2  = [ Split ( ud : [udCol `div` n | i <- [1..n] ] ) ( [Withdraw p] : [ [Withdraw i] | i <- ps]  ) ] -- dogecoin
+           
             -- | this is the first big choice of the compiled contract, where everything goes as expected, 2 remainning 
-            d1  = concatChoices [d'] s1 n m i 1                  -- bitcoin
-            d1x = concatChoices [dx'] s2 n m i 1                -- dogecoin
+            d1  = concatChoices c1 s1 n m i 1                  -- bitcoin
+            d1x = concatChoices c2 s2 n m i 1                  -- dogecoin
 
             d2  = cheatCase ps n ub ubCol dep1 s2 i m 1 t
             d2x = cheatCase ps n ud udCol dep2 s1 i m 1 t
@@ -68,32 +67,27 @@ compileC ( Withdrawx p : d) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =
             d3'  = map (After (i * t + tCheat)) d3
             d3x' = map (After (i * t + tCheat)) d3x
 
-            dnew  = d1  ++ d2 ++ d3'
-            dnewx = d1x ++ d2x ++ d3x'
-
-        in (dnew, dnewx)
+            cB  = d1  ++ d2 ++ d3'
+            cD  = d1x ++ d2x ++ d3x'
 
 
--- | WE NEED TO CARE about the COLLATERALS bc WE NEED TO KEEP THE INVARIANT Σ ui = balance
--- | where balance of C = U + COLLATERALS!
--- | IN THAT SENSE THE FOLLOWING IS WRONG !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
--- | we should compile split in a different way inserting somehow the collaterals in an extra contract
--- imagine that we have split [1,1] -> [c1,c2]
--- we do split [1,1, collaterals] -> [compiled-c1, compiled-c2, withdraw-collaterals]
-compileC [Splitx listU listC ] ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t = 
-        let 
-            cs       =  [compileC di ub ud ubCol udCol n m ps (i+1) s1 s2 dep1 dep2 t | di <- listC ]  
+compileC (Splitx listU listC : d) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t = 
+        case d of []       -> ( [Split u1 c1 ], [Split u2 c2 ] ) 
+
+                  (x : _)  -> (cB, cD)
+        where
+            listCol = [ (n * (n-1) * ui, n * (n-1) * uj ) | (ui, uj) <- listU]  
+            listU'  = [ (ui + n * (n-1) * ui, uj + n * (n-1) * uj ) | (ui, uj) <- listU]
+            cs       =  [compileC di ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t | di <- listC | (ub,ud) <- listU | (ubCol, udCol) <- listCol]  
             (c1,c2)  = unzip cs
-            (u1, u2) = unzip listU
-        in ([Split u1 c1 ], [Split u2 c2] )    
-compileC (Splitx listU listC : d) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =   
-        let
+            (u1, u2) = unzip listU'
+
+
             -- | someone reveals so we execute the first priority choice (split)
-            cs       =  [compileC di ub ud ubCol udCol n m ps (i+1) s1 s2 dep1 dep2 t | di <- listC ]  
-            (c1,c2)  = unzip cs
-            (u1, u2) = unzip listU
-            d'       = Split u1 c1
-            dx'      = Split u2 c2
+            cs'       =  [compileC di ub ud ubCol udCol n m ps (i+1) s1 s2 dep1 dep2 t | di <- listC | (ub,ud) <- listU | (ubCol, udCol) <- listCol]  
+            (c1',c2')  = unzip cs'
+            d'       = Split u1 c1'
+            dx'      = Split u2 c2'
 
             -- | this is the first big choice of the compiled contract, where everything goes as expected, 2 remainning 
             d1  = concatChoices [d'] s1 n m i 1                  -- bitcoin
@@ -106,10 +100,10 @@ compileC (Splitx listU listC : d) ub ud ubCol udCol n m ps i s1 s2 dep1 dep2 t =
             d3'  = map (After (i * t + tCheat)) d3
             d3x' = map (After (i * t + tCheat)) d3x
 
-            dnew  = d1 ++ d2 ++ d3'
-            dnewx = d1x ++ d2x ++ d3x'
+            cB = d1 ++ d2 ++ d3'
+            cD = d1x ++ d2x ++ d3x'
 
-        in (dnew, dnewx)
+        
 -- compileC ()        
 
 
@@ -158,10 +152,11 @@ vecCompr p s = let v = V.take p s V.++ V.drop (p+1) s
 -}
 
 check :: Gxl -> Int -> Int -> Vb -> Vd -> [Pname] -> Bool
-check g n m u1 u2 p =
-
-        let (b,x) = aux True g n m u1 u2 [] [] []
-        in  b && (^&&&) ( trimap (sameElems p) (sameElems p ) (sameElems p) x )
+check g n m u1 u2 p 
+        | m == 0    = let (b,x) = aux True g n m u1 u2 [] [] []
+                        in b && sameElems p (thd x)
+        | otherwise = let (b,x) = aux True g n m u1 u2 [] [] []
+                        in  b && (^&&&) ( trimap (sameElems p) (sameElems p ) (sameElems p) x )
 
         where
         aux :: Bool -> Gxl -> Int -> Int -> Vb -> Vd -> [Pname] -> [Pname] -> [Pname] -> ( Bool, ([Pname], [Pname], [Pname]) )
@@ -244,6 +239,7 @@ main = do
             -- | check well formness and then IF well formed -> compile
             t  = check g1 n m u1 u2 p             -- check if contract preconditions are well defined
             c' = compileC cSimpleTest u1 u2 col1 col2 n m p' level s1' s2' dep1' dep2' tInit  -- compile contract
+        print m
         when t (print t)
         when t (print $ fst c')
         --when t (print $ snd c')
