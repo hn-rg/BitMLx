@@ -13,11 +13,12 @@ g1 = [  Depx "A" (1, 1) ("x1", "x2"),
         Depx "B" (1, 1) ("y1", "y2"),
         Secretx "B" "b" "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
         DepCol "A" (2,2) ("x1col", "x2col"),
-        SecretPlusB "A" [ ("s1Ab", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875thg") , ("s2Ab", "6kk6b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875thg") ] ,
-        SecretPlusD "A" [ ("s1Ad", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875hjk"), ("s2Ad", "6b8kk273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875thg")  ] ,
+        SecretPlusB "A" [ ("s1Ab", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875thg")],--, ("s2Ab", "6kk6b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875thg") ] ,
+        SecretPlusD "A" [ ("s1Ad", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875hjk")], -- , ("s2Ad", "6b8kk273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875thg")  ] ,
         DepCol "B" (2,2) ("y1col","y2col"), 
-        SecretPlusB "B" [("s1Bb", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7859133"), ("s2Bb", "6b86b273ff34fcekkd6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875thg") ] ,
-        SecretPlusD "B" [("s1Bd", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7859567"), ("s2Bd", "6b86b273ff34fce19d6b804eff5a3f5747adsseaa22f1d49c01e52ddb7875thg") ] 
+        SecretPlusB "B" [("s1Bb", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7859133")], --, ("s2Bb", "6b86b273ff34fcekkd6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875thg") ] ,
+        SecretPlusD "B" [("s1Bd", "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7859567")], --, ("s2Bd", "6b86b273ff34fce19d6b804eff5a3f5747adsseaa22f1d49c01e52ddb7875thg") ] 
+        VolDepx "A" (1,1) ("x1","x2") 
     ]
 
 
@@ -30,6 +31,9 @@ c1 =  [ Revealifx ["a","b"] (Peq (Elength "a") (Elength "a") )  [ Withdrawx "B",
 adv :: GCx
 adv = Advx p1 g1 c1
 
+-- cSimpleTest :: Cx
+--cSimpleTest = [Splitx [(1,1), (1,1)] [[Withdrawx "A"], [Withdrawx "B", Withdrawx "A"]], Authx "A" $ Withdrawx "B"]
+
 cSimpleTest :: Cx
-cSimpleTest = [Splitx [(1,1), (1,1)] [[Withdrawx "A"], [Withdrawx "B", Withdrawx "A"]], Withdrawx "B"]
+cSimpleTest = [Putx [("x1","x2"), ("y1","y2")] [Withdrawx "A"], Authx "A" $ Withdrawx "B" ]
 -- end of example 1
