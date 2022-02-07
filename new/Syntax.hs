@@ -43,14 +43,14 @@ data Pred   = PTrue
             | Pnot Pred
             | Peq E E
             | Plt E E
-        deriving (Eq,Show)
+        deriving (Eq, Ord, Show)
 
 -- arithmetic expression
 data E  = Eint Integer
         | Elength Sname      -- length of a secret
         | Eadd E E
         | Esub E E
-        deriving (Eq,Show)
+        deriving (Eq, Ord, Show)
 
 -- participant in contract
 data P =  Par Pname PK
@@ -74,7 +74,7 @@ data Dx = Putx [(Xb,Xd)] Cx
         | Withdrawx Pname
         | Authx Pname Dx
         | Splitx [(Vb,Vd)] [Cx]
-        deriving (Eq,Show)
+        deriving (Eq, Ord, Show)
 
 
  -- contract advertisement

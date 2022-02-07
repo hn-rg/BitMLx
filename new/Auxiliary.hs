@@ -1,6 +1,5 @@
 module Auxiliary where
 
---import Data.Char
 import Data.List hiding (sort)
 
 import Data.Function
@@ -15,6 +14,12 @@ when False _ = fail "when failed"
 
 (^+) :: Num a => (a,a) -> (a,a) -> (a,a)
 (x1,x2) ^+ (y1,y2) = (x1+y1, x2+y2)
+
+(^*) :: Num a => (a,a) -> (a,a) -> (a,a)
+(x1,x2) ^* (y1,y2) = (x1*y1, x2*y2)
+
+(^+*) :: Num a => (a, a) -> (a, a) -> (a, a) -> (a, a) -> (a, a)
+x ^+* y = (^+) . (^*) x  
 
 -- | checks if two lists have the same elements, 
 -- even if they do not appear in the same order
@@ -46,4 +51,3 @@ sortVec = V.modify $ I.sortBy ( compare `on` fst )
 
 sortList :: Ord a => [a] -> [a]
 sortList = V.toList . V.modify I.sort . V.fromList
-
