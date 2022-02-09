@@ -25,5 +25,6 @@ executable bitmlx
   build-depends: 
     vector,      
     vector-algorithms,
+    containers,
     base >= 4.7 && < 5
     

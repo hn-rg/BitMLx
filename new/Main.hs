@@ -8,6 +8,9 @@ import Trifunctor
 import Auxiliary
 
 import Data.Char
+import Data.Maybe
+import Data.Map hiding (map,foldr)
+import qualified Data.Map as Map
 --import Data.List hiding (sort)
 import GHC.TypeLits
 
@@ -25,38 +28,51 @@ import qualified Data.Vector.Algorithms.Intro as I
 -}
 
 -- | initial values
-tCheat = 100                            -- extra time given to check if someone has cheated
-tInit = 1                               -- initial time
-level = 1                               -- initial level
-bal = 0                                 -- initial balance
-v = V.empty :: V.Vector (Pname, Sname)  -- for secrets
-v1 = V.empty :: V.Vector (Pname, Vb)    -- for bitcoin deposits
-v2 = V.empty :: V.Vector (Pname, Vb)    -- for othercoin deposits
+tCheat = 100                                -- extra time given to check if someone has cheated
+tInit  = 1                                  -- initial time
+level  = 1                                  -- initial level
+bal    = 0                                  -- initial balance
+v      = V.empty :: V.Vector (Pname, Sname) -- for secrets
+v1     = V.empty :: V.Vector (Pname, Vb)    -- for bitcoin deposits
+v2     = V.empty :: V.Vector (Pname, Vd)    -- for othercoin deposits
+vd1    = Map.empty :: Map.Map Xb Vb       -- for bitcoin volatile deposits
+vd2    = Map.empty :: Map.Map Xd Vd       -- for othercoin volatile deposits
 
 
 -- | INPUTS:
--- | contract C, bitcoin's balance ub, dogecoin's balance ud, bitcoin's collaterals ubCol, dogecoin's collaterals udCol, 
--- | # participants n, # priority choices m, list of participants ps, current level of execution i,
--- | secrets vector for bitcoin s1, secrets vector for dogecoin s2
--- | deposits vector for bitcoin s1, deposits vector for dogecoin s2
--- | current time t
--- | flag True for Bitcoin, False for Dogecoin
--- | compiled contracts Cb,Cd
+--   contract: Cx 
+-- , balance for CURRENT blockchain: u
+-- , collaterals for CURRENT blockchain: uCol,
+-- , # participants: n
+-- , # priority choices: m
+-- , list of participants: ps
+-- , current level of execution i
+-- , secrets vector for CURRENT blockchain: s1
+-- , secrets vector for OTHER blockchain: s2
+-- , deposits vector for CURRENT blockchain: dep
+-- , current time: t
+-- , flag: True for Bitcoin, False for Dogecoin
+
+-- | OUTPUT
+-- , compiled contract: C
+
 compileC :: Cx -> V -> V -> Int -> Int
     -> [Pname] -> Level
     -> V.Vector (Pname, Sname)
     -> V.Vector (Pname, Sname)
     -> V.Vector (Pname, V)
+    -> Map.Map X V
     -> Time
     -> Bool
     -> C
-compileC ( Withdrawx p : d) u uCol n m ps i s1 s2 dep t flag = 
-    case d of []       -> c1
+compileC ( Withdrawx p : d) u uCol n m ps i s1 s2 dep vdep t flag = 
+    case d of []       -> c
           
               (x : _)  -> c2
     where   
         
-        -- | if we have no other priority choice following (d == []), we take that choice without revealing any extra secret    
+        -- | if we have no other priority choice following (d == []), we take that choice without revealing any extra secret 
+        -- | because if there is at least one honest user in the setting she could do the step without any extra auth
         c  = [ Split ( u : replicate (uCol `div` n) n ) ( [Withdraw p] : [ [Withdraw i] | i <- ps] ) ]   -- bitcoin  
        
         -- | this is the first big choice of the compiled contract, where everything goes as expected, 2 remainning 
@@ -71,15 +87,15 @@ compileC ( Withdrawx p : d) u uCol n m ps i s1 s2 dep t flag =
         d2  = cheatCase ps n u uCol dep s2 i m 1 t
 
         -- | this is the 3rd big choice of the compiled contract, where noone revealed so we move to the next priority choice to be executed
-        d3 = compileC d u uCol n m ps (i+1) s1 s2 dep (i*t + tCheat) flag
+        d3 = compileC d u uCol n m ps (i+1) s1 s2 dep vdep (i*t + tCheat) flag
         d3'  = map (After (i * t + tCheat)) d3
 
-        -- | compiled contracts in bitcoin and dogecoin
+        -- | compiled contracts c1 if contract list= [] else c2
         c1 = d1 ++ d2
         c2  = c1 ++ d3'
 
-compileC (Splitx listU listC : d) u uCol n m ps i s1 s2 dep t True = 
-    case d of []       -> c1
+compileC (Splitx listU listC : d) u uCol n m ps i s1 s2 dep vdep t flag = 
+    case d of []       -> d'
 
               (x : _)  -> c2
     where
@@ -89,14 +105,21 @@ compileC (Splitx listU listC : d) u uCol n m ps i s1 s2 dep t True =
 
 
         -- | someone reveals so we execute the first priority choice (split)
-        c       =  [compileC di u uCol n m ps (i+1) s1 s2 dep t True | di <- listC | (u,_) <- listU | (uCol, _) <- listCol]  
-        d'      = Split u1 c
+        -- | if we have no other priority choice following (d == []), we take that choice without revealing any extra secret 
+        -- | because if there is at least one honest user in the setting she could do the step without any extra auth
+        c  = if flag 
+                then [compileC di u uCol n m ps i s1 s2 dep vdep t True  | di <- listC | (u,_) <- listU | (uCol, _) <- listCol]  -- compile its di with the same i and not (i+1) since we dont require here revealing extra secret
+                else [compileC di u uCol n m ps i s1 s2 dep vdep t False | di <- listC | (_,u) <- listU | (_, uCol) <- listCol]  -- compile its di with the same i and not (i+1) since we dont require here revealing extra secret
+
+        d' = if flag
+                then [Split u1 c]
+                else [Split u2 c]
 
         -- | this is the first big choice of the compiled contract, where everything goes as expected, 2 remainning 
         -- | here we just have a choice bewteen actions (reveals). Any user can reveal her extra secret of that level to stipulate c1 (c2 in dogecoin)
         -- | we concatenate all the possible reveal contracts
         -- | the number of possible reveals equals to the number of par/ants, the result of "concatChoices" is a list of contracts w\ lentgh n
-        d1  = concatChoices [d'] s1 n m i 1                  -- bitcoin
+        d1  = concatChoices d' s1 n m i 1                  -- bitcoin
         
         -- | this is the 2nd big choice of the compiled contract, where we check if someone has cheated
         -- | we concatenate all the possible cheat cases, where someone has revealed in only one of the two blockchains
@@ -104,154 +127,174 @@ compileC (Splitx listU listC : d) u uCol n m ps i s1 s2 dep t True =
         d2  = cheatCase ps n u uCol dep s2 i m 1 t
 
         -- | this is the 3rd big choice of the compiled contract, where noone revealed so we move to the next priority choice to be executed
-        d3   = compileC d u uCol n m ps (i+1) s1 s2 dep(i*t + tCheat) True
+        d3   = compileC d u uCol n m ps (i+1) s1 s2 dep vdep (i*t + tCheat) flag
         d3'  = map (After (i * t + tCheat)) d3
             
-        -- | compiled contracts in bitcoin and dogecoin
+        -- | compiled contracts c1 if d = [] else c2
         c1 = d1 ++ d2
         c2 = c1 ++ d3'
         
-compileC (Authx p d : ds) u uCol n m ps i s1 s2 dep t flag =
-    case ds of []        -> if length c1 == 1 && length c2 ==  1 then map (Auth p ) c1
+compileC (Authx p d : ds) u uCol n m ps i s1 s2 dep vdep t flag =
+    case ds of []        -> if length c1 == 1  then map (Auth p ) c1
                             else []
                (_ : xs)  -> c2
 
     where 
-        -- | here contract list has just one element, recursion ends    
-        c = compileC [d] u uCol n m ps (i+1) s1 s2 dep t flag       -- compile with the same i for level
-
-
-        -- | here contract list has more than one element, compile recursively
+        -- | here contract list has just one element, recursion ends
+        -- | but we still need to reveal an extra secret and the cheating mechanism
+        -- | to protect honest users from adversaries giving their authorization only in one blockchain    
+        c = compileC [d] u uCol n m ps (i+1) s1 s2 dep vdep t flag       
 
         -- | first compile the case where someone reveals a secret so steps to the first priority choice
-        d1  =  concati c1 s1 n m i 1 (Auth p (head c))                -- bitcoin
+        d1  =  concati c1 s1 n m i 1 (Auth p (head c))                
    
-        -- | then compile the case where someone has cheated, considering all the possible cheating cases
+        -- | second compile the case where someone has cheated, considering all the possible cheating cases
         d2  = cheatCase ps n u uCol dep s2 i m 1 t
 
+        -- | ( here contract list has more than one element, compile  recursively )
         -- | last case : none revealed so we move to the next priority choice to be executed
-        d3   = compileC ds u uCol n m ps (i+1) s1 s2 dep (i*t + tCheat) flag
+        d3   = compileC ds u uCol n m ps (i+1) s1 s2 dep vdep (i*t + tCheat) flag
         d3'  = map (After (i * t + tCheat)) d3
         
         -- | compiled contracts in bitcoin and dogecoin
         c1 = d1 ++ d2
         c2 = c1 ++ d3'
 
-compileC (Putx x cs : ds) u uCol n m ps i s1 s2 dep t True =
+compileC (Putx x cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
     case ds of 
         []         -> c1
         (_ : xs)   -> c2        -- compiled into a PutRev contract (atomic put and reveal)
 
-    where   
-        c = compileC cs u uCol n m ps (i+1) s1 s2 dep t True       -- compile with the same i for level
+    where 
+        -- | here contract list has just one element, recursion ends    
+        -- | but we still need to reveal an extra secret and the cheating mechanism
+        -- | to protect honest users from adversaries giving their authorization only in one blockchain    
+        c = compileC cs u uCol n m ps (i+1) s1 s2 dep vdep t flag       -- compile with the same i for level
         
-        -- | here contract list has more than one element, compile recursively
+        -- | *** ADD VOLATILE DEPOSITS IN BALANCE u WHEN COMPILING c ABOVE
+
         -- | first compile the case where someone reveals a secret so steps to the first priority choice
         (x1, x2) = unzip x
-        d1  =  concati c s1 n m i 1 (Put x1 c)             -- bitcoin 
+        d1       = if flag 
+                    then concati c s1 n m i 1 (Put x1 c) 
+                    else concati c s1 n m i 1 (Put x2 c)
 
         -- | cheat case
         d2  = cheatCase ps n u uCol dep s2 i m 1 t
 
+        -- | here contract list has more than one element, compile recursively
         -- | last case : none revealed so we move to the next priority choice to be executed
-        d3   = compileC ds u uCol n m ps (i+1) s1 s2 dep (i*t + tCheat) True
+        d3   = compileC ds u uCol n m ps (i+1) s1 s2 dep vdep (i*t + tCheat) flag
         d3'  = map (After (i * t + tCheat)) d3
-        
+        -- | *** ADD VOLATILE DEPOSITS IN BALANCE u WHEN COMPILING d3 ABOVE
+        -- | and also in ALL cases involving a "PUT"
+
         -- | compiled contracts in bitcoin and dogecoin
         c1 = d1 ++ d2
         c2 = c1 ++ d3'
 
-compileC (Revealx a cs : ds) u uCol n m ps i s1 s2 dep t flag =
+compileC (Revealx a cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
     case ds of 
         []         -> c1
-        (_ : xs)   -> c2         -- compiled into a PutRev contract (atomic put and reveal)
+        (_ : xs)   -> c2         -- compiled into a Rev contract (atomic  reveal)
 
-    where   
-        c = compileC cs u uCol n m ps (i+1) s1 s2 dep t flag       -- compile with the same i for level
+    where 
+        -- | here contract list has just one element, recursion ends    
+        -- | but we still need to reveal an extra secret and the cheating mechanism
+        -- | to protect honest users from adversaries giving their authorization only in one blockchain              
+        c = compileC cs u uCol n m ps (i+1) s1 s2 dep vdep t flag       -- compile with the same i for level
         
-        -- | here contract list has more than one element, compile recursively
         -- | first compile the case where someone reveals a secret so steps to the first priority choice
         d1  =  concati c s1 n m i 1 (Reveal a c)             -- bitcoin 
 
         -- | cheat case
         d2  = cheatCase ps n u uCol dep s2 i m 1 t
 
+        -- | here contract list has more than one element, compile recursively
         -- | last case : none revealed so we move to the next priority choice to be executed
-        d3   = compileC ds u uCol n m ps (i+1) s1 s2 dep (i*t + tCheat) flag
+        d3   = compileC ds u uCol n m ps (i+1) s1 s2 dep vdep (i*t + tCheat) flag
         d3'  = map (After (i * t + tCheat)) d3
         
-        -- | compiled contracts in bitcoin and dogecoin
+        -- | compiled contract
         c1 = d1 ++ d2
         c2 = c1 ++ d3'
 
-compileC (Revealifx a e cs : ds) u uCol n m ps i s1 s2 dep t flag =
+compileC (Revealifx a e cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
     case ds of 
         []         -> c1
-        (_ : xs)   -> c2         -- compiled into a PutRev contract (atomic put and reveal)
+        (_ : xs)   -> c2         -- compiled into a Rev contract (atomic reveal)
 
-    where   
-        c = compileC cs u uCol n m ps (i+1) s1 s2 dep t flag       -- compile with the same i for level
+    where  
+        -- | here contract list has just one element, recursion ends    
+        -- | but we still need to reveal an extra secret and the cheating mechanism
+        -- | to protect honest users from adversaries giving their authorization only in one blockchain                       
+        c = compileC cs u uCol n m ps (i+1) s1 s2 dep vdep t flag       -- compile with the same i for level
         
-        -- | here contract list has more than one element, compile recursively
         -- | first compile the case where someone reveals a secret so steps to the first priority choice
         d1  =  concati c s1 n m i 1 (Revealif a e c)             -- bitcoin 
 
         -- | cheat case
         d2  = cheatCase ps n u uCol dep s2 i m 1 t
-
+        
+        -- | here contract list has more than one element, compile recursively
         -- | last case : none revealed so we move to the next priority choice to be executed
-        d3   = compileC ds u uCol n m ps (i+1) s1 s2 dep (i*t + tCheat) flag
+        d3   = compileC ds u uCol n m ps (i+1) s1 s2 dep vdep (i*t + tCheat) flag
         d3'  = map (After (i * t + tCheat)) d3
         
-        -- | compiled contracts in bitcoin and dogecoin
+        -- | compiled contract c1 if d = [] else c2
         c1 = d1 ++ d2
         c2 = c1 ++ d3'
 
-compileC (PutRevx x a cs : ds) u uCol n m ps i s1 s2 dep t True =
+compileC (PutRevx x a cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
+    case ds of 
+        []         -> c1
+        (_ : xs)   -> c2         -- compiled into a PutRev contract (atomic put and reveal)
+
+    where  
+        
+        (x1,x2) = unzip x 
+        c = compileC cs u uCol n m ps (i+1) s1 s2 dep vdep t flag       -- compile with the same i for level
+        
+        -- | first compile the case where someone reveals a secret so steps to the first priority choice
+        d1  = if flag 
+                then concati c s1 n m i 1 (PutRev x1 a c)             -- bitcoin 
+                else concati c s1 n m i 1 (PutRev x2 a c)
+
+        -- | cheat case
+        d2  = cheatCase ps n u uCol dep s2 i m 1 t
+        
+        -- | here contract list has more than one element, compile recursively
+        -- | last case : none revealed so we move to the next priority choice to be executed
+        d3  = compileC ds u uCol n m ps (i+1) s1 s2 dep vdep (i*t + tCheat) flag
+        d3'  = map (After (i * t + tCheat)) d3
+
+        -- | compiled contracts c1 if ds = [] else c2
+        c1 = d1 ++ d2
+        c2 = c1 ++ d3'
+
+compileC (PutRevifx x a e cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
     case ds of 
         []         -> c1
         (_ : xs)   -> c2         -- compiled into a PutRev contract (atomic put and reveal)
 
     where  
         (x1,x2) = unzip x 
-        c = compileC cs u uCol n m ps (i+1) s1 s2 dep t True       -- compile with the same i for level
+        c = compileC cs u uCol n m ps (i+1) s1 s2 dep vdep t flag     -- compile with the same i for level
         
-        -- | here contract list has more than one element, compile recursively
         -- | first compile the case where someone reveals a secret so steps to the first priority choice
-        d1  =  concati c s1 n m i 1 (PutRev x1 a c)             -- bitcoin 
+        d1  = if flag 
+                then concati c s1 n m i 1 (PutRevif x1 a e c)             -- bitcoin 
+                else concati c s1 n m i 1 (PutRevif x2 a e c) 
 
         -- | cheat case
         d2  = cheatCase ps n u uCol dep s2 i m 1 t
 
-        -- | last case : none revealed so we move to the next priority choice to be executed
-        d3  = compileC ds u uCol n m ps (i+1) s1 s2 dep (i*t + tCheat) True
-        d3'  = map (After (i * t + tCheat)) d3
-
-        -- | compiled contracts in bitcoin and dogecoin
-        c1 = d1 ++ d2
-        c2 = c1 ++ d3'
-
-compileC (PutRevifx x a e cs : ds) u uCol n m ps i s1 s2 dep t True =
-    case ds of 
-        []         -> c1
-        (_ : xs)   ->  c2         -- compiled into a PutRev contract (atomic put and reveal)
-
-    where  
-        (x1,x2) = unzip x 
-        c = compileC cs u uCol n m ps (i+1) s1 s2 dep t True     -- compile with the same i for level
-        
         -- | here contract list has more than one element, compile recursively
-        -- | first compile the case where someone reveals a secret so steps to the first priority choice
-        d1  =  concati c s1 n m i 1 (PutRevif x1 a e c)             -- bitcoin 
-
-        -- | cheat case
-        d2  = cheatCase ps n u uCol dep s2 i m 1 t
-
         -- | last case : none revealed so we move to the next priority choice to be executed
-        d3 = compileC ds u uCol n m ps (i+1) s1 s2 dep (i*t + tCheat) True
-        d3'  = map (After (i * t + tCheat)) d3
+        d3  = compileC ds u uCol n m ps (i+1) s1 s2 dep vdep (i*t + tCheat) flag
+        d3' = map (After (i * t + tCheat)) d3
         
-        -- | compiled contracts in bitcoin and dogecoin
+        -- | compiled contracts 
         c1 = d1 ++ d2
         c2 = c1 ++ d3'
 
@@ -320,15 +363,16 @@ cheatCase ps n u ucol dep s i m j t
                                         [ [Withdraw i] | (i,_) <- ps' ] ] )   -- see *** below
           p = i - 1 + m * (j - 1)
           ps' = vecCompr (j-1) dep
+
 -- | *** participants list is extracted from deposits list, 
 -- | the order of appearance is the same in deposits list and secrets list, since we have sorted them.
-
 -- | P  is the participant who is checked for cheating
-
-
 vecCompr :: Int -> V.Vector (Pname, a) -> [(Pname, a)]
 vecCompr p s = let v = V.take p s V.++ V.drop (p+1) s
                 in V.toList v
+
+toAddVolDeps :: [X] -> Map.Map X V -> V
+toAddVolDeps xs v = foldr (\x y -> v Map.! x + y) 0 xs
 
 -- | well - formness of collaterals and extra secrets
 {- | ________
@@ -358,15 +402,26 @@ check g n m u1 u2 p
     aux True []                              n m u1 u2 p1 p2 p3 = ( True, ( p1, p2, p3 ) )
 
 
--- | balance of the contract
--- mind that we have one for bitcoin, one for dogecoin
--- so the balance is a tuple of balances, for now
-balCol :: Gxl -> Vb -> Vd -> Vb -> Vd -> V.Vector (Pname, Vb) -> V.Vector (Pname, Vd)
-        -> (Vb, Vd, Vb, Vd, V.Vector (Pname, Vb), V.Vector (Pname, Vb))
-balCol []                            n1 n2 col1 col2 p1 p2 = (n1, n2, col1, col2, p1, p2)
-balCol (Depx p (vb,vd) (_,_) : xs)   n1 n2 col1 col2 p1 p2 = balCol xs (n1 + vb) (n2 + vd) col1 col2 (V.cons (p,vb) p1) (V.cons (p,vd) p2)
-balCol (DepCol p (vb,vd) (_,_) : xs) n1 n2 col1 col2 p1 p2 = balCol xs n1 n2 (col1 + vb) (col2 + vd) p1 p2
-balCol ( _ : xs)                     n1 n2 col1 col2 p1 p2 = balCol xs n1 n2 col1 col2 p1 p2
+-- | INPUTS
+--   contract preconditions Gxl
+-- , bitcoin balance n1
+-- , dogecoin balance n2
+-- , bitcoin collaterals : col1
+-- , dogecoin collaterals: col2
+-- , tuple vector for participants and their deposit in bitcoin : p1
+-- , tuple vector for participants and their deposit in dogecoin : p2
+-- , tuple vector for volatile deposit names and their value in bitcoin : vol1
+-- , tuple vector for volatile deposit names and their value in dogecoin : vol2
+
+balCol :: Gxl -> Vb -> Vd -> Vb -> Vd 
+        -> V.Vector (Pname, Vb) -> V.Vector (Pname, Vd)
+        -> Map.Map Xb Vb -> Map.Map Xd Vd
+        -> (Vb, Vd, Vb, Vd, V.Vector (Pname, Vb), V.Vector (Pname, Vb), Map.Map Xb Vb, Map.Map Xd Vd)
+balCol []                               n1 n2 col1 col2 p1 p2 vol1 vol2 = (n1, n2, col1, col2, p1, p2, vol1, vol2)
+balCol (Depx p (vb,vd) (_,_) : xs)      n1 n2 col1 col2 p1 p2 vol1 vol2 = balCol xs (n1 + vb) (n2 + vd) col1 col2 (V.cons (p,vb) p1) (V.cons (p,vd) p2) vol1 vol2
+balCol (DepCol p (vb,vd) (_,_) : xs)    n1 n2 col1 col2 p1 p2 vol1 vol2 = balCol xs n1 n2 (col1 + vb) (col2 + vd) p1 p2 vol1 vol2
+balCol (VolDepx _ (vb,vd) (xb,xd) : xs) n1 n2 col1 col2 p1 p2 vol1 vol2 = balCol xs n1 n2 col1 col2 p1 p2 (Map.insert xb vb vol1) (Map.insert xd vd vol2)
+balCol ( _ : xs)                        n1 n2 col1 col2 p1 p2 vol1 vol2 = balCol xs n1 n2 col1 col2 p1 p2 vol1 vol2
 
 
 -- | this function takes as input a G describing contract preconditions
@@ -384,7 +439,9 @@ lSecrets ( _ : xs )               v1 v2 = lSecrets xs v1 v2
 -- | even for them which are guarded by a reveal
 -- | and for them created by a split
 nPriChoices ::  Cx  -> Int
-nPriChoices []         = 0
+nPriChoices []                       = 0
+nPriChoices [Splitx _ cs]            = sum (map nPriChoices  cs)
+nPriChoices [Withdrawx _ ]           = 0
 nPriChoices (Putx _ c : xs)          = 1 + nPriChoices c + nPriChoices xs
 nPriChoices (Revealx _ c : xs)       = 1 + nPriChoices c + nPriChoices xs
 nPriChoices (Revealifx _ _ c : xs)   = 1 + nPriChoices c + nPriChoices xs
@@ -400,7 +457,7 @@ main :: IO ()
 main = do
     let
         n = length p1                        -- number of participants
-        (u1, u2, col1, col2, dep1, dep2) = balCol g1 bal bal bal bal v1 v2           -- balance of contract + collaterals
+        (u1, u2, col1, col2, dep1, dep2, vol1, vol2) = balCol g1 bal bal bal bal v1 v2 vd1 vd2          -- balance of contract + collaterals
         m = nPriChoices cSimpleTest           -- number of priority choices
         p = map (\ (Par x y) -> x) p1        -- list of participants' names
         (s1,s2) = lSecrets g1 v v            -- list (vector) of secrets' names
@@ -414,11 +471,12 @@ main = do
 
         -- | check well formness and then IF well formed -> compile
         t  = check g1 n m u1 u2 p             -- check if contract preconditions are well defined
-        c1' = compileC c1 u1  col1  n m p' level s1' s2' dep1' tInit True -- compile contract
-        --c2' = compileC c1 u2  col2  n m p' level s2' s1' dep2' tInit False -- compile contract
+        cB = compileC c1 u1  col1  n m p' level s1' s2' dep1' vol1 tInit True  -- compile contract IN BITCOIN
+        cD = compileC c1 u2  col2  n m p' level s2' s1' dep2' vol2 tInit False -- compile contract IN DOGECOIN
+       -- test = toAddVolDeps ["x1","x2", "x3"] 
     print m
     when t (print t)
-    when t (print c1')
-        --when t (print $ snd c')
+    when t (print cB)
+    when t (print cD)
         
 
