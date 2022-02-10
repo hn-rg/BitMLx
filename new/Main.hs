@@ -64,11 +64,11 @@ compileC :: Cx -> V -> V -> Int -> Int
     -> Map.Map X V
     -> Time
     -> Bool
-    -> Maybe C
+    -> C
 compileC ( Withdrawx p : d) u uCol n m ps i s1 s2 dep vdep t flag = 
-    case d of []       -> Just c
+    case d of []       ->  c
           
-              (x : _)  -> Just c2
+              (x : _)  ->  c2
     where   
         
         -- | if we have no other priority choice following (d == []), we take that choice without revealing any extra secret 
@@ -85,9 +85,9 @@ compileC ( Withdrawx p : d) u uCol n m ps i s1 s2 dep vdep t flag =
 
 
 compileC (Splitx listU listC : d) u uCol n m ps i s1 s2 dep vdep t flag = 
-    case d of []       -> Just d'
+    case d of []       ->  d'
 
-              (x : _)  -> Just c2
+              (x : _)  ->  c2
     where
         listCol =  map (^* (n * (n - 1), n * (n - 1)) )  listU -- [ (n * (n-1) * ui, n * (n-1) * uj ) | (ui, uj) <- listU]  
         listU'  =  [ (ui + n * (n - 1) * ui, uj + n * (n - 1) * uj ) | (ui, uj) <- listU]
@@ -98,8 +98,8 @@ compileC (Splitx listU listC : d) u uCol n m ps i s1 s2 dep vdep t flag =
         -- | if we have no other priority choice following (d == []), we take that choice without revealing any extra secret 
         -- | because if there is at least one honest user in the setting she could do the step without any extra auth
         c  = if flag 
-                then [fromJust $ compileC di u uCol n m ps i s1 s2 dep vdep t True  | di <- listC | (u,_) <- listU | (uCol, _) <- listCol]  -- compile its di with the same i and not (i+1) since we dont require here revealing extra secret
-                else [fromJust $ compileC di u uCol n m ps i s1 s2 dep vdep t False | di <- listC | (_,u) <- listU | (_, uCol) <- listCol]  -- compile its di with the same i and not (i+1) since we dont require here revealing extra secret
+                then [compileC di u uCol n m ps i s1 s2 dep vdep t True  | di <- listC | (u,_) <- listU | (uCol, _) <- listCol]  -- compile its di with the same i and not (i+1) since we dont require here revealing extra secret
+                else [compileC di u uCol n m ps i s1 s2 dep vdep t False | di <- listC | (_,u) <- listU | (_, uCol) <- listCol]  -- compile its di with the same i and not (i+1) since we dont require here revealing extra secret
 
         d' = if flag
                 then [Split u1 c]
@@ -111,30 +111,32 @@ compileC (Splitx listU listC : d) u uCol n m ps i s1 s2 dep vdep t flag =
         -- | the number of possible reveals equals to the number of par/ants, the result of "concatChoices" is a list of contracts w\ lentgh n
         d1  = concatChoices d' s1 n m i 1                  -- bitcoin
         
-        (c1, c2) = create2ExtraChoices d1 d u uCol n m ps i s1 s2 dep vdep t flag
+        k = foldr1 (\x y ->if x >= y then x else y) (map nPriChoices listC)
+
+        (c1, c2) = create2ExtraChoices d1 d u uCol n m ps (i+k) s1 s2 dep vdep t flag
 
         
 compileC (Authx p d : ds) u uCol n m ps i s1 s2 dep vdep t flag =
-    case ds of []        -> if length c1 == 1  then Just $ map (Auth p ) c1
-                            else Nothing
-               (_ : xs)  -> Just c2
+    case ds of []        -> c1
+               (_ : xs)  -> c2
 
     where 
         -- | here contract list has just one element, recursion ends
         -- | but we still need to reveal an extra secret and the cheating mechanism
         -- | to protect honest users from adversaries giving their authorization only in one blockchain    
-        c = fromJust $ compileC [d] u uCol n m ps (i+1) s1 s2 dep vdep t flag       
-
+        c = compileC [d] u uCol n m ps (i+1) s1 s2 dep vdep t flag       
+        
+        k = nPriChoices [d]
         -- | first compile the case where someone reveals a secret so steps to the first priority choice
-        d1  =  concati c1 s1 n m i 1 (Auth p (head c) )               
+        d1  =  concati c s1 n m i 1 (Auth p (head c) )               
    
-        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps i s1 s2 dep vdep t flag
+        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps (i+k) s1 s2 dep vdep t flag
 
 
 compileC (Putx x cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
     case ds of 
-        []         -> Just c1
-        (_ : xs)   -> Just c2        -- compiled into a PutRev contract (atomic put and reveal)
+        []         ->  c1
+        (_ : xs)   ->  c2        -- compiled into a PutRev contract (atomic put and reveal)
 
     where 
         -- | here contract list has just one element, recursion ends    
@@ -144,7 +146,7 @@ compileC (Putx x cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
         voldeps = if flag
                     then toAddVolDeps x1 vdep
                     else toAddVolDeps x2 vdep
-        c = fromJust $ compileC cs (u+voldeps) uCol n m ps (i+1) s1 s2 dep vdep t flag       -- compile with the same i for level
+        c = compileC cs (u+voldeps) uCol n m ps (i+1) s1 s2 dep vdep t flag       -- compile with the same i for level
         
         -- | *** ADD VOLATILE DEPOSITS IN BALANCE u WHEN COMPILING c ABOVE -> done
 
@@ -152,47 +154,50 @@ compileC (Putx x cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
         d1  = if flag 
                 then concati c s1 n m i 1 (Put x1 c )
                 else concati c s1 n m i 1 (Put x2 c )
-
-        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps i s1 s2 dep vdep t flag
+        
+        k = nPriChoices cs
+        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps (i+k) s1 s2 dep vdep t flag
 
 
 compileC (Revealx a cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
     case ds of 
-        []         -> Just c1
-        (_ : xs)   -> Just c2         -- compiled into a Rev contract (atomic  reveal)
+        []         ->  c1
+        (_ : xs)   ->  c2         -- compiled into a Rev contract (atomic  reveal)
 
     where 
         -- | here contract list has just one element, recursion ends    
         -- | but we still need to reveal an extra secret and the cheating mechanism
         -- | to protect honest users from adversaries giving their authorization only in one blockchain              
-        c = fromJust $ compileC cs u uCol n m ps (i+1) s1 s2 dep vdep t flag       -- compile with the same i for level
+        c = compileC cs u uCol n m ps (i+1) s1 s2 dep vdep t flag       -- compile with the same i for level
         
         -- | first compile the case where someone reveals a secret so steps to the first priority choice
         d1  =  concati c s1 n m i 1 (Reveal a c )             -- bitcoin 
 
-        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps i s1 s2 dep vdep t flag
+        k = nPriChoices cs
+        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps (i+k) s1 s2 dep vdep t flag
 
 
 compileC (Revealifx a e cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
     case ds of 
-        []         -> Just c1
-        (_ : xs)   -> Just c2         -- compiled into a Rev contract (atomic reveal)
+        []         ->  c1
+        (_ : xs)   ->  c2         -- compiled into a Rev contract (atomic reveal)
 
     where  
         -- | here contract list has just one element, recursion ends    
         -- | but we still need to reveal an extra secret and the cheating mechanism
         -- | to protect honest users from adversaries giving their authorization only in one blockchain                       
-        c = fromJust $ compileC cs u uCol n m ps (i+1) s1 s2 dep vdep t flag       -- compile with the same i for level
+        c = compileC cs u uCol n m ps (i+1) s1 s2 dep vdep t flag       -- compile with the same i for level
         
         -- | first compile the case where someone reveals a secret so steps to the first priority choice
         d1  =  concati c s1 n m i 1 (Revealif a e c)             -- bitcoin 
 
-        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps i s1 s2 dep vdep t flag
+        k = nPriChoices cs
+        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps (i+k) s1 s2 dep vdep t flag
 
 compileC (PutRevx x a cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
     case ds of 
-        []         -> Just c1
-        (_ : xs)   -> Just c2         -- compiled into a PutRev contract (atomic put and reveal)
+        []         ->  c1
+        (_ : xs)   ->  c2         -- compiled into a PutRev contract (atomic put and reveal)
 
     where  
         
@@ -200,34 +205,37 @@ compileC (PutRevx x a cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
         voldeps = if flag
                     then toAddVolDeps x1 vdep
                     else toAddVolDeps x2 vdep
-        c = fromJust $ compileC cs (u+voldeps) uCol n m ps (i+1) s1 s2 dep vdep t flag       -- compile with the same i for level
+        c =  compileC cs (u+voldeps) uCol n m ps (i+1) s1 s2 dep vdep t flag       -- compile with the same i for level
         
         -- | first compile the case where someone reveals a secret so steps to the first priority choice
         d1  = if flag 
                 then concati c s1 n m i 1 (PutRev x1 a c)             -- bitcoin 
                 else concati c s1 n m i 1 (PutRev x2 a c)
-
-        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps i s1 s2 dep vdep t flag
+        
+        k = nPriChoices cs
+        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps (i+k) s1 s2 dep vdep t flag
 
 
 compileC (PutRevifx x a e cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
     case ds of 
-        []         -> Just c1
-        (_ : xs)   -> Just c2         -- compiled into a PutRev contract (atomic put and reveal)
+        []         ->  c1
+        (_ : xs)   ->  c2         -- compiled into a PutRev contract (atomic put and reveal)
 
     where  
         (x1,x2) = unzip x 
         voldeps = if flag
                     then toAddVolDeps x1 vdep
                     else toAddVolDeps x2 vdep
-        c = fromJust $ compileC cs (u+voldeps) uCol n m ps (i+1) s1 s2 dep vdep t flag     -- compile with the same i for level
+        c =  compileC cs (u+voldeps) uCol n m ps (i+1) s1 s2 dep vdep t flag     -- compile with the same i for level
         
         -- | first compile the case where someone reveals a secret so steps to the first priority choice
         d1  = if flag 
                 then concati c s1 n m i 1 (PutRevif x1 a e c)             -- bitcoin 
                 else concati c s1 n m i 1 (PutRevif x2 a e c) 
 
-        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps i s1 s2 dep vdep t flag
+        k = nPriChoices cs
+
+        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps (i+k) s1 s2 dep vdep t flag
 
 
 -- | INPUTS:
@@ -267,7 +275,7 @@ create2ExtraChoices d1 ds u uCol n m ps i s1 s2 dep vdep t flag =
         
         -- | here contract list has more than one element, compile recursively
         -- | this is the 3rd and last big choice of the compiled contract, where noone revealed so we move to the next priority choice to be executed
-        d3   = fromJust $ compileC ds u uCol n m ps (i+1) s1 s2 dep vdep (i*t + tCheat) flag
+        d3   = compileC ds u uCol n m ps (i+1) s1 s2 dep vdep (i*t + tCheat) flag
         d3'  = map (After (i * t + tCheat)) d3
 
         -- | compiled contracts c1 if contract list= [] else c2
@@ -417,8 +425,8 @@ lSecrets ( _ : xs )               v1 v2 = lSecrets xs v1 v2
 -- | and for them created by a split
 nPriChoices ::  Cx  -> Int
 nPriChoices []                       = 0
-nPriChoices [Splitx _ cs]            = sum (map nPriChoices  cs)
 nPriChoices [Withdrawx _ ]           = 0
+nPriChoices [Splitx _ cs]            = sum (map nPriChoices  cs)
 nPriChoices (Putx _ c : xs)          = 1 + nPriChoices c + nPriChoices xs
 nPriChoices (Revealx _ c : xs)       = 1 + nPriChoices c + nPriChoices xs
 nPriChoices (Revealifx _ _ c : xs)   = 1 + nPriChoices c + nPriChoices xs
@@ -427,7 +435,7 @@ nPriChoices (PutRevifx _ _ _ c : xs) = 1 + nPriChoices c + nPriChoices xs
 nPriChoices (Splitx _ cs : xs)       = let m = sum (map nPriChoices  cs)
                                        in 1 + m + nPriChoices  xs
 nPriChoices (Withdrawx _ : xs)       = 1 + nPriChoices  xs
-nPriChoices (Authx _ _ : xs)         = 1 + nPriChoices xs
+nPriChoices (Authx _ d : xs)         = 1 + nPriChoices [d] + nPriChoices xs
 
 
 main :: IO ()
@@ -448,12 +456,12 @@ main = do
 
         -- | check well formness and then IF well formed -> compile
         t  = check g1 n m u1 u2 p             -- check if contract preconditions are well defined
-        cB = compileC c1 u1  col1  n m p' level s1' s2' dep1' vol1 tInit True  -- compile contract IN BITCOIN
-        cD = compileC c1 u2  col2  n m p' level s2' s1' dep2' vol2 tInit False -- compile contract IN DOGECOIN
+        cB = compileC cSimpleTest u1  col1  n m p' level s1' s2' dep1' vol1 tInit True  -- compile contract IN BITCOIN
+        cD = compileC cSimpleTest u2  col2  n m p' level s2' s1' dep2' vol2 tInit False -- compile contract IN DOGECOIN
 
     print m
     when t (print t)
-    when t (print (fromJust cB) )
-    when t (print (fromJust cD) )
+    when t (print cB )
+    when t (print cD )
         
 
