@@ -31,10 +31,14 @@ c1 =  [ Authx "A" $ Revealifx ["a","b"] (Peq (Elength "a") (Elength "a") )  [Wit
 
 adv :: GCx
 adv = Advx p1 g1 c1
-
--- cSimpleTest :: Cx
---cSimpleTest = [Splitx [(1,1), (1,1)] [[Withdrawx "A"], [Withdrawx "B", Withdrawx "A"]], Authx "A" $ Withdrawx "B"]
-
-cSimpleTest :: Cx
-cSimpleTest = [Putx [("x1","x2"), ("y1","y2")] [Withdrawx "A"], Authx "A" $ Revealifx ["a","b"] (Peq (Elength "a") (Elength "a") )  [Withdrawx "A"]  ]
 -- end of example 1
+
+
+c2 :: Cx
+c2 = [Putx [("x1","x2"), ("y1","y2")] [Withdrawx "A"], Authx "A" $ Revealifx ["a","b"] (Peq (Elength "a") (Elength "a") )  [Withdrawx "A"]  ]
+
+c3 :: C
+c3 = [Withdraw "A", Withdraw "B", Withdraw "A"]
+
+c3a :: C
+c3a = [Split [1,1] [[Withdraw "A"], [Withdraw "B", Withdraw "A"]], Auth "A" $ Withdraw "B"]

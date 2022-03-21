@@ -54,7 +54,7 @@ data E  = Eint Integer
 
 -- participant in contract
 data P =  Par Pname PK
-        deriving (Eq,Show)
+        --deriving (Eq,Show)
 
 -- contract preconditions
 data Gx = Depx Pname (Vb,Vd) (Xb,Xd)
@@ -106,7 +106,7 @@ data D  = Put [X] C
         | Auth Pname D
         | Split [V] [C]
         | After Time D
-        deriving (Eq,Show)
+       deriving (Eq,Show)
 
  -- contract advertisement
 data GC = Adv Pl Gl C
