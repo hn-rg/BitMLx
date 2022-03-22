@@ -448,7 +448,7 @@ main = do
     let
         n = length p1                        -- number of participants
         (u1, u2, col1, col2, dep1, dep2, vol1, vol2) = balCol g1 bal bal bal bal v1 v2 vd1 vd2          -- balance of contract + collaterals
-        m = nPriChoices c2          -- number of priority choices
+        m = nPriChoices c1          -- number of priority choices
         p = map (\ (Par x y) -> x) p1        -- list of participants' names
         (s1,s2) = lSecrets g1 v v            -- list (vector) of secrets' names
 
@@ -461,10 +461,10 @@ main = do
 
         -- | check well formness and then IF well formed -> compile
         t  = check g1 n m u1 u2 p             -- check if contract preconditions are well defined
-        cB = compileC c2 u1  col1  n m p' level s1' s2' dep1' vol1 tInit True  -- compile contract IN BITCOIN
-        cD = compileC c2 u2  col2  n m p' level s2' s1' dep2' vol2 tInit False -- compile contract IN DOGECOIN
-        doc = prettyprin c3
-    putDocW 80 doc
+        cB = compileC c1 u1  col1  n m p' level s1' s2' dep1' vol1 tInit True  -- compile contract IN BITCOIN
+        cD = compileC c1 u2  col2  n m p' level s2' s1' dep2' vol2 tInit False -- compile contract IN DOGECOIN
+        doc = prettyprintNL cB
+    putDocW 120 doc
     --print m
     --when t (print t)
     --when t (print cB )
