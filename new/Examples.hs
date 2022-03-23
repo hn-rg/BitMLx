@@ -35,8 +35,18 @@ adv = Advx p1 g1 c1
 c2 :: Cx
 c2 = [Putx [("x1","x2"), ("y1","y2")] [Withdrawx "A"], Authx "A" $ Revealifx ["a","b"] (Peq (Elength "a") (Elength "a") )  [Withdrawx "A"]  ]
 
+
+g3 :: Gxl
+g3 = [  Depx "A" (1, 1) ("x1", "x2"),
+        Depx "B" (1, 1) ("y1", "y2"),
+        DepCol "A" (2,2) ("x1col", "x2col"),
+        SecretPlusB "A" [ ("s1Ab", "hi1")  ] ,
+        SecretPlusD "A" [ ("s1Ad", "hi1x")  ] ,
+        DepCol "B" (2,2) ("y1col","y2col"), 
+        SecretPlusB "B" [ ("s1Bb", "hii1") ] ,
+        SecretPlusD "B" [ ("s1Bd", "hii1x") ] 
+    ]
+
 c3 :: Cx
 c3 = [Withdrawx "A", Withdrawx "B"] --, Withdrawx "A", Withdrawx "B"]
 
-c3a :: C
-c3a = [Split [1,1] [[Withdraw "A"], [Withdraw "B", Withdraw "A"]], Auth "A" $ Withdraw "B", Auth "B" $ Withdraw "A"]

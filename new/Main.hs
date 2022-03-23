@@ -489,6 +489,6 @@ main = do
     
     where 
         participants = p1
-        preconditions = g1
-        contract = c1
+        preconditions = g3
+        contract = c3
 

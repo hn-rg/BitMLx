@@ -1,149 +1,53 @@
-(choice
- (auth "A" (reveal s1Ab (choice
-                         (revealif s2Ab a b (= a b) (split
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "B")))
+(contract
+ (choice
+  (reveal (s1Ab) (split
+                   (2 -> (withdraw "A"))
+                   (2 -> (withdraw "A"))
+                   (2 -> (withdraw "B")))
+                 )
+  (reveal (s1Bb) (split
+                   (2 -> (withdraw "A"))
+                   (2 -> (withdraw "A"))
+                   (2 -> (withdraw "B")))
+                 )
+  (after 1 (reveal (s1Ad) (split
+                            (5 -> (withdraw "B")))
                           )
-                         (revealif s2Bb a b (= a b) (split
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "B")))
+   )
+  (after 1 (reveal (s1Bd) (split
+                            (5 -> (withdraw "A")))
                           )
-                         (after 2 (reveal s2Ad (split
-                                                 (5 -> (withdraw "B")))
-                                               )
-                          )
-                         (after 2 (reveal s2Bd (split
-                                                 (5 -> (withdraw "A")))
-                                               )
-                          )
-                         ))
-  )
- (auth "A" (reveal s1Bb (choice
-                         (revealif s2Ab a b (= a b) (split
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "B")))
-                          )
-                         (revealif s2Bb a b (= a b) (split
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "B")))
-                          )
-                         (after 2 (reveal s2Ad (split
-                                                 (5 -> (withdraw "B")))
-                                               )
-                          )
-                         (after 2 (reveal s2Bd (split
-                                                 (5 -> (withdraw "A")))
-                                               )
-                          )
-                         ))
-  )
- (after 1 (reveal s1Ad (split
-                         (5 -> (withdraw "B")))
-                       )
-  )
- (after 1 (reveal s1Bd (split
-                         (5 -> (withdraw "A")))
-                       )
-  )
- (after 101 (revealif s3Ab a b (pred (not (= a b))) (split
-                                                      (2 -> (withdraw "B"))
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "B")))
-             )
-  )
- (after 101 (revealif s3Bb a b (pred (not (= a b))) (split
-                                                      (2 -> (withdraw "B"))
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "B")))
-             )
-  )
- (after 101 (after 303 (reveal s3Ad (split
-                                      (5 -> (withdraw "B")))
-                                    )
-             )
-  )
- (after 101 (after 303 (reveal s3Bd (split
-                                      (5 -> (withdraw "A")))
-                                    )
-             )
-  )
- )
+   )
+  (after 101 (split
+               (2 -> (withdraw "B"))
+               (2 -> (withdraw "A"))
+               (2 -> (withdraw "B")))
+   )
+  ))
 
-(choice
- (auth "A" (reveal s1Ad (choice
-                         (revealif s2Ad a b (= a b) (split
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "B")))
+(contract
+ (choice
+  (reveal (s1Ad) (split
+                   (2 -> (withdraw "A"))
+                   (2 -> (withdraw "A"))
+                   (2 -> (withdraw "B")))
+                 )
+  (reveal (s1Bd) (split
+                   (2 -> (withdraw "A"))
+                   (2 -> (withdraw "A"))
+                   (2 -> (withdraw "B")))
+                 )
+  (after 1 (reveal (s1Ab) (split
+                            (5 -> (withdraw "B")))
                           )
-                         (revealif s2Bd a b (= a b) (split
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "B")))
+   )
+  (after 1 (reveal (s1Bb) (split
+                            (5 -> (withdraw "A")))
                           )
-                         (after 2 (reveal s2Ab (split
-                                                 (5 -> (withdraw "B")))
-                                               )
-                          )
-                         (after 2 (reveal s2Bb (split
-                                                 (5 -> (withdraw "A")))
-                                               )
-                          )
-                         ))
-  )
- (auth "A" (reveal s1Bd (choice
-                         (revealif s2Ad a b (= a b) (split
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "B")))
-                          )
-                         (revealif s2Bd a b (= a b) (split
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "B")))
-                          )
-                         (after 2 (reveal s2Ab (split
-                                                 (5 -> (withdraw "B")))
-                                               )
-                          )
-                         (after 2 (reveal s2Bb (split
-                                                 (5 -> (withdraw "A")))
-                                               )
-                          )
-                         ))
-  )
- (after 1 (reveal s1Ab (split
-                         (5 -> (withdraw "B")))
-                       )
-  )
- (after 1 (reveal s1Bb (split
-                         (5 -> (withdraw "A")))
-                       )
-  )
- (after 101 (revealif s3Ad a b (pred (not (= a b))) (split
-                                                      (2 -> (withdraw "B"))
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "B")))
-             )
-  )
- (after 101 (revealif s3Bd a b (pred (not (= a b))) (split
-                                                      (2 -> (withdraw "B"))
-                                                      (2 -> (withdraw "A"))
-                                                      (2 -> (withdraw "B")))
-             )
-  )
- (after 101 (after 303 (reveal s3Ab (split
-                                      (5 -> (withdraw "B")))
-                                    )
-             )
-  )
- (after 101 (after 303 (reveal s3Bb (split
-                                      (5 -> (withdraw "A")))
-                                    )
-             )
-  )
- )
+   )
+  (after 101 (split
+               (2 -> (withdraw "B"))
+               (2 -> (withdraw "A"))
+               (2 -> (withdraw "B")))
+   )
+  ))
