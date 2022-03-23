@@ -22,8 +22,14 @@ import Data.Bifunctor as DB
 import qualified Data.Vector as V
 
 import qualified Data.Vector.Algorithms.Intro as I
-import Prettyprinter.Util
 
+import Prettyprinter.Util
+import Prettyprinter.Render.Text 
+import Data.Text.IO as T
+import Prettyprinter.Internal
+import Data.Text.Lazy.IO as TL
+
+import Text.Printf
 {- _____ Goal _____
 
         BitMLx ---> / preprocessing / ---> / compilation / ---> BitML||
@@ -84,7 +90,10 @@ compileC ( Withdrawx p : d) u uCol n m ps i s1 s2 dep vdep t flag =
         -- | the number of possible reveals equals to the number of par/ants, the result of "concatChoices" is a list of contracts w\ lentgh n
         d1  = concatChoices c s1 n m i 1                  -- bitcoin
 
-        (c1, c2) = create2ExtraChoices d1 d u uCol n m ps i s1 s2 dep vdep t flag
+        -- | when we call create2extrachoices, we want to take care the "cheat" Case and the "after tCheat" case
+        -- the cheat case is fired if the secret from the current level on the other side is revealed
+        -- and the after tCheat is fired if no secret is revealed in any side. i indicates the current level (and the current secret)
+        (c1, c2) = create2ExtraChoices d1 d u uCol n m ps i i s1 s2 dep vdep t flag
 
 
 compileC (Splitx listU listC : d) u uCol n m ps i s1 s2 dep vdep t flag = 
@@ -116,7 +125,15 @@ compileC (Splitx listU listC : d) u uCol n m ps i s1 s2 dep vdep t flag =
         
         k = foldr1 (\x y ->if x >= y then x else y) (map nPriChoices listC)
 
-        (c1, c2) = create2ExtraChoices d1 d u uCol n m ps (i+k) s1 s2 dep vdep t flag
+        -- | when we call create2extrachoices, we want to take care the "cheat" Case and the "after tCheat" case
+        -- the cheat case is fired if the secret from the current level on the other side is revealed
+        -- and the after tCheat is fired if no secret is revealed in any side. 
+        -- i indicates the current level (and the current secret)
+        -- !!! i+k indicates the level of the AFTER case because here we have nested levels we want to skip
+        -- in example a split contract may fire other 1000 contracts so when we are considering the after case (if we dont take the split)
+        -- we use the secret in the 10001th place so as IN ALL LEVELS WE HAVE DIFFERENT SECRETS !!!!!!!!!!!!!!
+        -- its like a BFS for the secrets
+        (c1, c2) = create2ExtraChoices d1 d u uCol n m ps i (i+k) s1 s2 dep vdep t flag
 
         
 compileC (Authx p d : ds) u uCol n m ps i s1 s2 dep vdep t flag =
@@ -133,7 +150,7 @@ compileC (Authx p d : ds) u uCol n m ps i s1 s2 dep vdep t flag =
         -- | first compile the case where someone reveals a secret so steps to the first priority choice
         d1  =  concati c s1 n m i 1 (Auth p (head c) )               
    
-        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps (i+k) s1 s2 dep vdep t flag
+        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps i (i+k) s1 s2 dep vdep t flag
 
 
 compileC (Putx x cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
@@ -159,7 +176,7 @@ compileC (Putx x cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
                 else concati c s1 n m i 1 (Put x2 c )
         
         k = nPriChoices cs
-        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps (i+k) s1 s2 dep vdep t flag
+        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps i (i+k) s1 s2 dep vdep t flag
 
 
 compileC (Revealx a cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
@@ -177,7 +194,7 @@ compileC (Revealx a cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
         d1  =  concati c s1 n m i 1 (Reveal a c )             -- bitcoin 
 
         k = nPriChoices cs
-        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps (i+k) s1 s2 dep vdep t flag
+        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps i (i+k) s1 s2 dep vdep t flag
 
 
 compileC (Revealifx a e cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
@@ -195,7 +212,7 @@ compileC (Revealifx a e cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
         d1  =  concati c s1 n m i 1 (Revealif a e c)             -- bitcoin 
 
         k = nPriChoices cs
-        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps (i+k) s1 s2 dep vdep t flag
+        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps i (i+k) s1 s2 dep vdep t flag
 
 compileC (PutRevx x a cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
     case ds of 
@@ -216,7 +233,7 @@ compileC (PutRevx x a cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
                 else concati c s1 n m i 1 (PutRev x2 a c)
         
         k = nPriChoices cs
-        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps (i+k) s1 s2 dep vdep t flag
+        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps i (i+k) s1 s2 dep vdep t flag
 
 
 compileC (PutRevifx x a e cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
@@ -238,7 +255,7 @@ compileC (PutRevifx x a e cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
 
         k = nPriChoices cs
 
-        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps (i+k) s1 s2 dep vdep t flag
+        (c1, c2) = create2ExtraChoices d1 ds u uCol n m ps i (i+k) s1 s2 dep vdep t flag
 
 
 -- | INPUTS:
@@ -260,7 +277,7 @@ compileC (PutRevifx x a e cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
 -- , compiled contracts: c1,c2
 
 create2ExtraChoices :: C -> Cx -> V -> V -> Int -> Int
-    -> [Pname] -> Level
+    -> [Pname] -> Level -> Level
     -> V.Vector (Pname, Sname)
     -> V.Vector (Pname, Sname)
     -> V.Vector (Pname, V)
@@ -269,7 +286,7 @@ create2ExtraChoices :: C -> Cx -> V -> V -> Int -> Int
     -> Bool
     ->(C,C)
 
-create2ExtraChoices d1 ds u uCol n m ps i s1 s2 dep vdep t flag = 
+create2ExtraChoices d1 ds u uCol n m ps i nexti s1 s2 dep vdep t flag = 
     let    
         -- | this is the 2nd big choice of the compiled contract, where we check if someone has cheated
         -- | we concatenate all the possible cheat cases, where someone has revealed in only one of the two blockchains
@@ -278,7 +295,7 @@ create2ExtraChoices d1 ds u uCol n m ps i s1 s2 dep vdep t flag =
         
         -- | here contract list has more than one element, compile recursively
         -- | this is the 3rd and last big choice of the compiled contract, where noone revealed so we move to the next priority choice to be executed
-        d3   = compileC ds u uCol n m ps (i+1) s1 s2 dep vdep (i*t + tCheat) flag
+        d3   = compileC ds u uCol n m ps (nexti+1) s1 s2 dep vdep (i*t + tCheat) flag
         d3'  = map (After (i * t + tCheat)) d3
 
         -- | compiled contracts c1 if contract list= [] else c2
@@ -446,11 +463,11 @@ nPriChoices (Authx _ d : xs)         = 1 + nPriChoices [d] + nPriChoices xs
 main :: IO ()
 main = do
     let
-        n = length p1                        -- number of participants
-        (u1, u2, col1, col2, dep1, dep2, vol1, vol2) = balCol g1 bal bal bal bal v1 v2 vd1 vd2          -- balance of contract + collaterals
-        m = nPriChoices c1          -- number of priority choices
-        p = map (\ (Par x y) -> x) p1        -- list of participants' names
-        (s1,s2) = lSecrets g1 v v            -- list (vector) of secrets' names
+        n = length participants                        -- number of participants
+        (u1, u2, col1, col2, dep1, dep2, vol1, vol2) = balCol preconditions bal bal bal bal v1 v2 vd1 vd2          -- balance of contract + collaterals
+        m = nPriChoices contract          -- number of priority choices
+        p = map (\ (Par x y) -> x) participants        -- list of participants' names
+        (s1,s2) = lSecrets preconditions v v            -- list (vector) of secrets' names
 
         -- | sort participants list, secrets vectors, deposits vectors according to alphabetical order of participants names
         p' = sortList p
@@ -460,14 +477,18 @@ main = do
         dep2' = sortVec dep2
 
         -- | check well formness and then IF well formed -> compile
-        t  = check g1 n m u1 u2 p             -- check if contract preconditions are well defined
-        cB = compileC c1 u1  col1  n m p' level s1' s2' dep1' vol1 tInit True  -- compile contract IN BITCOIN
-        cD = compileC c1 u2  col2  n m p' level s2' s1' dep2' vol2 tInit False -- compile contract IN DOGECOIN
-        doc = prettyprintNL cB
-    putDocW 120 doc
-    --print m
-    --when t (print t)
-    --when t (print cB )
-    --when t (print cD )
+        t  = check preconditions n m u1 u2 p             -- check if contract preconditions are well defined
+        cB = compileC contract u1  col1  n m p' level s1' s2' dep1' vol1 tInit True  -- compile contract IN BITCOIN
+        cD = compileC contract u2  col2  n m p' level s2' s1' dep2' vol2 tInit False -- compile contract IN DOGECOIN
         
+        -- | use prettyprinter for results and write them to file
+        doc = prettyprintNL cB <> line <> prettyprintNL cD
+        render = renderLazy (layoutPretty defaultLayoutOptions doc)
+    
+    when t (TL.writeFile "example.txt" render)
+    
+    where 
+        participants = p1
+        preconditions = g1
+        contract = c1
 

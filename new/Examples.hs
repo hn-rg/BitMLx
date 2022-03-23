@@ -22,8 +22,6 @@ g1 = [  Depx "A" (1, 1) ("x1", "x2"),
         VolDepx "B" (1,1) ("y1","y2") 
     ]
 
-
-
 c1 :: Cx
 c1 =  [ Authx "A" $ Revealifx ["a","b"] (Peq (Elength "a") (Elength "b") )  [Withdrawx "A"] ,
         Revealifx ["a","b"] (Pnot (Peq (Elength "a") (Elength "b")) )  [ Withdrawx "B" ]   -- "a" and "b" are names not values!
