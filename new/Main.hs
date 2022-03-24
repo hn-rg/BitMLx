@@ -47,6 +47,17 @@ v2     = V.empty :: V.Vector (Pname, Vd)    -- for othercoin deposits
 vd1    = Map.empty :: Map.Map Xb Vb       -- for bitcoin volatile deposits
 vd2    = Map.empty :: Map.Map Xd Vd       -- for othercoin volatile deposits
 
+compileG :: Gxl -> Bool -> Gl
+compileG []                                         _     = []
+compileG (Depx p (v1,v2) (x1,x2) : gs)              True  = (Dep p v1 x1) : compileG gs True
+compileG (Depx p (v1,v2) (x1,x2) : gs)              False = (Dep p v2 x2) : compileG gs False
+compileG (VolDepx p (v1,v2) (x1,x2) (tx1,tx2) : gs) True  = (VolDep p v1 x1 tx1) : compileG gs True
+compileG (VolDepx p (v1,v2) (x1,x2) (tx1,tx2) : gs) False = (VolDep p v2 x2 tx2) : compileG gs False
+compileG (Secretx p s shash : gs)                   b     = (Secret p s shash) : compileG gs b
+compileG (DepCol p (v1,v2) (x1,x2) : gs)            True  = (Dep p v1 x1) : compileG gs True
+compileG (DepCol p (v1,v2) (x1,x2) : gs)            False = (Dep p v2 x2) : compileG gs False
+compileG (SecretPlusB p slist : gs)                 b     = [ (Secret p s shash) | (s,shash) <- slist] ++ compileG gs b
+compileG (SecretPlusD p slist : gs)                 b     = [ (Secret p s shash) | (s,shash) <- slist] ++ compileG gs b
 
 -- | INPUTS:
 --   contract: Cx 
@@ -422,11 +433,11 @@ balCol :: Gxl -> Vb -> Vd -> Vb -> Vd
         -> V.Vector (Pname, Vb) -> V.Vector (Pname, Vd)
         -> Map.Map Xb Vb -> Map.Map Xd Vd
         -> (Vb, Vd, Vb, Vd, V.Vector (Pname, Vb), V.Vector (Pname, Vb), Map.Map Xb Vb, Map.Map Xd Vd)
-balCol []                               n1 n2 col1 col2 p1 p2 vol1 vol2 = (n1, n2, col1, col2, p1, p2, vol1, vol2)
-balCol (Depx p (vb,vd) (_,_) : xs)      n1 n2 col1 col2 p1 p2 vol1 vol2 = balCol xs (n1 + vb) (n2 + vd) col1 col2 (V.cons (p,vb) p1) (V.cons (p,vd) p2) vol1 vol2
-balCol (DepCol p (vb,vd) (_,_) : xs)    n1 n2 col1 col2 p1 p2 vol1 vol2 = balCol xs n1 n2 (col1 + vb) (col2 + vd) p1 p2 vol1 vol2
-balCol (VolDepx _ (vb,vd) (xb,xd) : xs) n1 n2 col1 col2 p1 p2 vol1 vol2 = balCol xs n1 n2 col1 col2 p1 p2 (Map.insert xb vb vol1) (Map.insert xd vd vol2)
-balCol ( _ : xs)                        n1 n2 col1 col2 p1 p2 vol1 vol2 = balCol xs n1 n2 col1 col2 p1 p2 vol1 vol2
+balCol []                               n1 n2 col1 col2 p1 p2 vol1 vol2       = (n1, n2, col1, col2, p1, p2, vol1, vol2)
+balCol (Depx p (vb,vd) (_,_) : xs)      n1 n2 col1 col2 p1 p2 vol1 vol2       = balCol xs (n1 + vb) (n2 + vd) col1 col2 (V.cons (p,vb) p1) (V.cons (p,vd) p2) vol1 vol2
+balCol (DepCol p (vb,vd) (_,_) : xs)    n1 n2 col1 col2 p1 p2 vol1 vol2       = balCol xs n1 n2 (col1 + vb) (col2 + vd) p1 p2 vol1 vol2
+balCol (VolDepx _ (vb,vd) (xb,xd) (_,_) : xs) n1 n2 col1 col2 p1 p2 vol1 vol2 = balCol xs n1 n2 col1 col2 p1 p2 (Map.insert xb vb vol1) (Map.insert xd vd vol2)
+balCol ( _ : xs)                        n1 n2 col1 col2 p1 p2 vol1 vol2       = balCol xs n1 n2 col1 col2 p1 p2 vol1 vol2
 
 
 -- | this function takes as input a G describing contract preconditions
@@ -480,13 +491,18 @@ main = do
         t  = check preconditions n m u1 u2 p             -- check if contract preconditions are well defined
         cB = compileC contract u1  col1  n m p' level s1' s2' dep1' vol1 tInit True  -- compile contract IN BITCOIN
         cD = compileC contract u2  col2  n m p' level s2' s1' dep2' vol2 tInit False -- compile contract IN DOGECOIN
-        
+        gB = compileG preconditions True
+        gD = compileG preconditions False
+
         -- | use prettyprinter for results and write them to file
-        doc = prettyprintNL cB <> line <> prettyprintNL cD
-        render = renderLazy (layoutPretty defaultLayoutOptions doc)
-    
-    when t (TL.writeFile "example.txt" render)
-    
+        docB = prettyprintNL participants gB cB 
+        docD = prettyprintNL participants gB cD
+        renderB = renderLazy (layoutPretty defaultLayoutOptions docB)
+        renderD = renderLazy (layoutPretty defaultLayoutOptions docD)
+
+    when t (TL.writeFile "exampleB.txt" renderB)
+    when t (TL.writeFile "exampleD.txt" renderD)
+
     where 
         participants = p1
         preconditions = g3

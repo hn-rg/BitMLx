@@ -57,8 +57,8 @@ data P =  Par Pname PK
         --deriving (Eq,Show)
 
 -- contract preconditions
-data Gx = Depx Pname (Vb,Vd) (Xb,Xd)
-        | VolDepx Pname (Vb,Vd) (Xb,Xd)
+data Gx = Depx Pname (Vb,Vd) (Xb,Xd)                    -- deposit participant (bitcoin, dogecoin) (tx-name, tx-name)
+        | VolDepx Pname (Vb,Vd) (Xb,Xd) (Xb,Xd)         -- vol-deposit participant (bitcoin, dogecoin) (dep-name, dep-name) (tx-name, tx-name)
         | Secretx Pname Sname Shash
         | DepCol Pname (Vb,Vd) (Xb,Xd)
         | SecretPlusB Pname [(Sname, Shash)]
@@ -92,7 +92,7 @@ type C = [D]
 
 -- contract preconditions
 data G  = Dep Pname V X
-        | VolDep Pname V X
+        | VolDep Pname V X X
         | Secret Pname Sname Shash
         deriving (Eq,Show)
 

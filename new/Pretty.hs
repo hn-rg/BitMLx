@@ -34,13 +34,13 @@ prettyprintSplit xs cs =  align ( pretty "split" <> line)  <+> ( align $ sep $ z
                          
 
 prettyprint :: C -> Doc x
-prettyprint []                   = emptyDoc
-prettyprint (Withdraw p : cs)    = parens ( align ( pretty "withdraw" <+> dquotes (pretty p) ) ) <> align (prettyprint cs ) -- <> line
-prettyprint (Split xs cs : cs')  = parens ( prettyprintSplit (map pretty xs) (map prettyprintNew cs) ) <> line <> align  (prettyprint cs')  -- <> line
-prettyprint (Auth p d : cs)      = parens ( align (pretty "auth" <+> dquotes (pretty p) <+> prettyprint [d] ) ) <> line <>  align (prettyprint cs ) -- <> line
-prettyprint (After t d : cs)     = parens ( align (pretty "after" <+> pretty t <+> prettyprint [d]) ) <> line <> align (prettyprint cs )
-prettyprint (Reveal as cs : cs') = parens ( align (pretty "reveal" <+> parens (hsep (map pretty as) ) <+> align ( prettyprintNew cs) ) ) <> line <> align (prettyprint cs' )
-prettyprint (Put xs cs : cs')    = parens ( align (pretty "put" <+> hsep (map pretty xs) <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
+prettyprint []                          = emptyDoc
+prettyprint (Withdraw p : cs)           = parens ( align ( pretty "withdraw" <+> dquotes (pretty p) ) ) <> align (prettyprint cs ) -- <> line
+prettyprint (Split xs cs : cs')         = parens ( prettyprintSplit (map pretty xs) (map prettyprintNew cs) ) <> line <> align  (prettyprint cs')  -- <> line
+prettyprint (Auth p d : cs)             = parens ( align (pretty "auth" <+> dquotes (pretty p) <+> prettyprint [d] ) ) <> line <>  align (prettyprint cs ) -- <> line
+prettyprint (After t d : cs)            = parens ( align (pretty "after" <+> pretty t <+> prettyprint [d]) ) <> line <> align (prettyprint cs )
+prettyprint (Reveal as cs : cs')        = parens ( align (pretty "reveal" <+> parens (hsep (map pretty as) ) <+> align ( prettyprintNew cs) ) ) <> line <> align (prettyprint cs' )
+prettyprint (Put xs cs : cs')           = parens ( align (pretty "put" <+> hsep (map pretty xs) <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
 prettyprint (Revealif as pred cs : cs') = parens ( align (pretty "revealif" <+> parens (hsep (map pretty as)) <+> prettypred pred <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
 
 prettyprintNew :: C -> Doc x
@@ -48,5 +48,23 @@ prettyprintNew []   = emptyDoc
 prettyprintNew [c]  = prettyprint [c]
 prettyprintNew c    = parens $ pretty "choice" <> line <+> align (prettyprint c)
 
-prettyprintNL :: C -> Doc x
-prettyprintNL c = parens ( pretty "contract" <> line <+> align ( prettyprintNew c )) <> line
+
+prettyprintG :: Gl -> Doc x
+prettyprintG                      [] = emptyDoc
+prettyprintG (Dep p v tx : gs)       = parens ( align (pretty "deposit" <+> dquotes (pretty p) <+> (pretty v) <+> dquotes (pretty tx) ) ) <> line <> align (prettyprintG gs)
+prettyprintG (VolDep p v x tx : gs)  = parens ( align (pretty "vol-deposit" <+> dquotes (pretty p) <+> (pretty x ) <+> (pretty v) <+> dquotes (pretty tx) ) ) <> line <> align (prettyprintG gs)
+prettyprintG (Secret p s shash : gs) = parens ( align (pretty "secret"<+> dquotes (pretty p) <+> (pretty s) <+> dquotes (pretty shash) ) ) <> line <> align (prettyprintG gs)
+
+prettyprintGNew :: Gl -> Doc x
+prettyprintGNew [] = emptyDoc
+prettyprintGNew g  = parens $ pretty "pre" <> line <+> align (prettyprintG g)
+
+prettyprintP :: Pl -> Doc x
+prettyprintP              [] = emptyDoc
+prettyprintP (Par p pk : ps) = parens (align (pretty "participant" <+> dquotes (pretty p) <+> dquotes (pretty pk) ) ) <> line <> align (prettyprintP ps)
+
+prettyprintGC :: Gl -> C -> Doc x
+prettyprintGC g c = parens ( pretty "contract" <> line <+> align ( prettyprintGNew g ) <> line <> line <+> align ( prettyprintNew c )) <> line
+
+prettyprintNL :: Pl -> Gl -> C -> Doc x
+prettyprintNL p g c = prettyprintP p <> line <> prettyprintGC g c

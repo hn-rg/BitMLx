@@ -18,8 +18,8 @@ g1 = [  Depx "A" (1, 1) ("x1", "x2"),
         DepCol "B" (2,2) ("y1col","y2col"), 
         SecretPlusB "B" [ ("s1Bb", "hii1"), ("s2Bb", "hii2"), ("s3Bb", "hii3") ] ,
         SecretPlusD "B" [ ("s1Bd", "hii1x"), ("s2Bd", "hii2x") , ("s3Bd", "hii3x") ] , 
-        VolDepx "A" (1,1) ("x1","x2"),
-        VolDepx "B" (1,1) ("y1","y2") 
+        VolDepx "A" (1,1) ("x1","x2") ("txa1", "txa2"),
+        VolDepx "B" (1,1) ("y1","y2") ("txb1", "txb2")
     ]
 
 c1 :: Cx
