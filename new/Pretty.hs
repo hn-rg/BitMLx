@@ -66,5 +66,8 @@ prettyprintP (Par p pk : ps) = parens (align (pretty "participant" <+> dquotes (
 prettyprintGC :: Gl -> C -> Doc x
 prettyprintGC g c = parens ( pretty "contract" <> line <+> align ( prettyprintGNew g ) <> line <> line <+> align ( prettyprintNew c )) <> line
 
+prettyprintPGC :: Pl -> Gl -> C -> Doc x
+prettyprintPGC p g c = prettyprintP p <> line <> prettyprintGC g c
+
 prettyprintNL :: Pl -> Gl -> C -> Doc x
-prettyprintNL p g c = prettyprintP p <> line <> prettyprintGC g c
+prettyprintNL p g c = pretty "#lang bitml" <> line <> line <> pretty "(debug-mode)" <> line <> line <> prettyprintPGC p g c

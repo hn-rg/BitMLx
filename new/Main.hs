@@ -500,11 +500,13 @@ main = do
         renderB = renderLazy (layoutPretty defaultLayoutOptions docB)
         renderD = renderLazy (layoutPretty defaultLayoutOptions docD)
 
-    when t (TL.writeFile "exampleB.txt" renderB)
-    when t (TL.writeFile "exampleD.txt" renderD)
+    when t (TL.writeFile outB renderB)
+    when t (TL.writeFile outD renderD)
 
     where 
         participants = p1
         preconditions = g3
         contract = c3
+        outB = "outB.rkt"
+        outD = "outD.rkt"
 
