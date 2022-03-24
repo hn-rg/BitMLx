@@ -5,16 +5,7 @@ import Syntax
 import Prettyprinter.Internal
 import Prettyprinter.Internal.Type
 import Prettyprinter.Symbols.Ascii
-
 import Prettyprinter.Util
-
-{-
-prettyprintType :: [Doc x] -> Doc x
-prettyprintType = align . sep . zipWith (<+>) ( repeat (pretty "->"))
-
-prettyprintDeclaration :: Pretty a => a -> [Doc b] -> Doc b
-prettyprintDeclaration n tys1  = pretty n <+> prettyprintType  tys1
--}
 
 prettypred :: Pred -> Doc x
 prettypred PTrue        = pretty "true"

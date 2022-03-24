@@ -17,6 +17,7 @@ executable bitmlx
   hs-source-dirs:      new
   main-is:             Main.hs
   other-modules: 
+    Compiler
     Syntax
     Examples
     Trifunctor
