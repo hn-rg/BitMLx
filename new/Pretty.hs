@@ -18,6 +18,10 @@ import Prettyprinter.Util
                                        (and (= a 1) (= b 0))))    ; A=paper, B=rock
 -}
 
+{-
+(revealif (a b a1) (pred (= a1 (+ a b))) (withdraw "A"))
+-}
+
 prettypred :: Pred -> Doc x
 prettypred PTrue        = pretty "true"
 prettypred (Pand p1 p2) = parens ( pretty "pred" <+> parens ( pretty "and" <+> prettypred p1 <+> prettypred p2 ))
