@@ -7,11 +7,24 @@ import Prettyprinter.Internal.Type
 import Prettyprinter.Symbols.Ascii
 import Prettyprinter.Util
 
+{-
+(revealif (b) (pred (and (!= b n) (between b 0 2))) (withdraw "B"))
+   (after 10 (withdraw "A"))))
+-}
+
+{-
+(revealif (a b) (pred (or (or (and (= a 0) (= b 2))  ; A=rock, B=scissors
+                                           (and (= a 2) (= b 1))) ; A=scissors, B=paper
+                                       (and (= a 1) (= b 0))))    ; A=paper, B=rock
+-}
+
 prettypred :: Pred -> Doc x
 prettypred PTrue        = pretty "true"
 prettypred (Pand p1 p2) = parens ( pretty "pred" <+> parens ( pretty "and" <+> prettypred p1 <+> prettypred p2 ))
+prettypred (Por p1 p2) = parens ( pretty "pred" <+> parens ( pretty "or" <+> prettypred p1 <+> prettypred p2 ))
 prettypred (Pnot p)     = parens ( pretty "pred" <+> parens ( pretty "not" <+> prettypred p ))
-prettypred (Peq e1 e2)  = parens ( pretty  "=" <+> prettyexp e1 <+> prettyexp e2 )
+prettypred (Peq e1 e2)  = parens ( pretty "pred" <+> parens ( pretty "=" <+> prettyexp e1 <+> prettyexp e2) )
+prettypred (Pneq e1 e2) = parens ( pretty "pred" <+> parens ( pretty "!=" <+> prettyexp e1 <+> prettyexp e2) )
 prettypred (Plt e1 e2)  = emptyDoc
 
 prettyexp :: E -> Doc x
@@ -25,14 +38,16 @@ prettyprintSplit xs cs =  align ( pretty "split" <> line)  <+> ( align $ sep $ z
                          
 
 prettyprint :: C -> Doc x
-prettyprint []                          = emptyDoc
-prettyprint (Withdraw p : cs)           = parens ( align ( pretty "withdraw" <+> dquotes (pretty p) ) ) <> align (prettyprint cs ) -- <> line
-prettyprint (Split xs cs : cs')         = parens ( prettyprintSplit (map pretty xs) (map prettyprintNew cs) ) <> line <> align  (prettyprint cs')  -- <> line
-prettyprint (Auth p d : cs)             = parens ( align (pretty "auth" <+> dquotes (pretty p) <+> prettyprint [d] ) ) <> line <>  align (prettyprint cs ) -- <> line
-prettyprint (After t d : cs)            = parens ( align (pretty "after" <+> pretty t <+> prettyprint [d]) ) <> line <> align (prettyprint cs )
-prettyprint (Reveal as cs : cs')        = parens ( align (pretty "reveal" <+> parens (hsep (map pretty as) ) <+> align ( prettyprintNew cs) ) ) <> line <> align (prettyprint cs' )
-prettyprint (Put xs cs : cs')           = parens ( align (pretty "put" <+> hsep (map pretty xs) <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
-prettyprint (Revealif as pred cs : cs') = parens ( align (pretty "revealif" <+> parens (hsep (map pretty as)) <+> prettypred pred <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
+prettyprint []                              = emptyDoc
+prettyprint (Withdraw p : cs)              = parens ( align ( pretty "withdraw" <+> dquotes (pretty p) ) ) <> align (prettyprint cs ) -- <> line
+prettyprint (Split xs cs : cs')            = parens ( prettyprintSplit (map pretty xs) (map prettyprintNew cs) ) <> line <> align  (prettyprint cs')  -- <> line
+prettyprint (Auth p d : cs)                = parens ( align (pretty "auth" <+> dquotes (pretty p) <+> prettyprint [d] ) ) <> line <>  align (prettyprint cs ) -- <> line
+prettyprint (After t d : cs)               = parens ( align (pretty "after" <+> pretty t <+> prettyprint [d]) ) <> line <> align (prettyprint cs )
+prettyprint (Reveal as cs : cs')           = parens ( align (pretty "reveal" <+> parens (hsep (map pretty as) ) <+> align ( prettyprintNew cs) ) ) <> line <> align (prettyprint cs' )
+prettyprint (Put xs cs : cs')              = parens ( align (pretty "put" <+> hsep (map pretty xs) <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
+prettyprint (Revealif as pred cs : cs')    = parens ( align (pretty "revealif" <+> parens (hsep (map pretty as)) <+> prettypred pred <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
+prettyprint (PutRev xs as cs : cs')        = emptyDoc
+prettyprint (PutRevif xs as pred cs : cs') = emptyDoc
 
 prettyprintNew :: C -> Doc x
 prettyprintNew []   = emptyDoc

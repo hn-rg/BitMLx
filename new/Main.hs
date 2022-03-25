@@ -56,8 +56,8 @@ main = do
 
         -- | INPUTS & OUTPUTS : IF YOU WANT TO TEST EDIT HERE THANK YOU :)
         participants = p1
-        preconditions = g3
-        contract = c3
+        preconditions = g1
+        contract = c1
         outB = "outB.rkt"
         outD = "outD.rkt"
 

@@ -40,8 +40,10 @@ type Cx = [Dx]
 -- predicate
 data Pred   = PTrue
             | Pand Pred Pred
+            | Por Pred Pred
             | Pnot Pred
             | Peq E E
+            | Pneq E E
             | Plt E E
         deriving (Eq, Ord, Show)
 
