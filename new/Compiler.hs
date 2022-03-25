@@ -12,7 +12,8 @@ import qualified Data.Vector as V
 
 tCheat = 100                                -- extra time given to check if someone has cheated
 
-
+-- True : bitcoin
+-- False : dogecoin
 compileG :: Gxl -> Bool -> Gl
 compileG []                                         _     = []
 compileG (Depx p (v1,v2) (x1,x2) : gs)              True  = (Dep p v1 x1) : compileG gs True
@@ -204,7 +205,7 @@ compileC (PutRevx x a cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
                     else toAddVolDeps x2 vdep
         c =  compileC cs (u+voldeps) uCol n m ps (i+1) s1 s2 dep vdep t flag       -- compile with the same i for level
         
-        -- | first compile the case where someone reveals a secret so steps to the first priority choice
+        -- | first compile the case where someone reveals a secret, so steps to the first priority choice
         d1  = if flag 
                 then concati c s1 n m i 1 (PutRev x1 a c)             -- bitcoin 
                 else concati c s1 n m i 1 (PutRev x2 a c)
@@ -225,7 +226,7 @@ compileC (PutRevifx x a e cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
                     else toAddVolDeps x2 vdep
         c =  compileC cs (u+voldeps) uCol n m ps (i+1) s1 s2 dep vdep t flag     -- compile with the same i for level
         
-        -- | first compile the case where someone reveals a secret so steps to the first priority choice
+        -- | first compile the case where someone reveals a secret, so steps to the first priority choice
         d1  = if flag 
                 then concati c s1 n m i 1 (PutRevif x1 a e c)             -- bitcoin 
                 else concati c s1 n m i 1 (PutRevif x2 a e c) 
@@ -251,7 +252,8 @@ compileC (PutRevifx x a e cs : ds) u uCol n m ps i s1 s2 dep vdep t flag =
 -- , flag: True for Bitcoin, False for Dogecoin
 
 -- | OUTPUT
--- , compiled contracts: c1,c2
+--   compiled contracts: c1 (reveal + cheat case -> when we dont have a following choice) 
+--                      ,c2 (reveal + cheat case + after case -> when we have a following choice)
 
 create2ExtraChoices :: C -> Cx -> V -> V -> Int -> Int
     -> [Pname] -> Level -> Level
