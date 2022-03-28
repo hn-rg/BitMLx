@@ -28,13 +28,16 @@ import Prettyprinter.Util
 
 prettypred :: Pred -> Doc x
 prettypred PTrue           = pretty "true"
-prettypred (Pand p1 p2)    = parens ( pretty "pred" <+> parens ( pretty "and" <+> prettypred p1 <+> prettypred p2 ))
-prettypred (Por p1 p2)     = parens ( pretty "pred" <+> parens ( pretty "or" <+> prettypred p1 <+> prettypred p2 ))
-prettypred (Pnot p)        = parens ( pretty "pred" <+> parens ( pretty "not" <+> prettypred p ))
-prettypred (Peq e1 e2)     = parens ( pretty "pred" <+> parens ( pretty "=" <+> prettyexp e1 <+> prettyexp e2) )
-prettypred (Pneq e1 e2)    = parens ( pretty "pred" <+> parens ( pretty "!=" <+> prettyexp e1 <+> prettyexp e2) )
-prettypred (Pbtwn p e1 e2) = parens ( pretty "pred" <+> parens ( pretty "between" <+> prettypred p <+> prettyexp e1 <+> prettyexp e2) )
-prettypred (Plt e1 e2)     = emptyDoc
+prettypred (Pand p1 p2)    = parens ( pretty "and" <+> prettypred p1 <+> prettypred p2 )
+prettypred (Por p1 p2)     = parens ( pretty "or" <+> prettypred p1 <+> prettypred p2 )
+prettypred (Pnot p)        = parens ( pretty "not" <+> prettypred p )
+prettypred (Peq e1 e2)     = parens ( pretty "=" <+> prettyexp e1 <+> prettyexp e2) 
+prettypred (Pneq e1 e2)    = parens ( pretty "!=" <+> prettyexp e1 <+> prettyexp e2)
+prettypred (Pbtwn p e1 e2) = parens ( pretty "between" <+> prettyexp p <+> prettyexp e1 <+> prettyexp e2)
+prettypred (Plt e1 e2)     = parens ( pretty "<" <+> prettyexp e1 <+> prettyexp e2)
+
+prettypred' :: Pred -> Doc x
+prettypred' p = parens $ pretty "pred" <+> prettypred p
 
 prettyexp :: E -> Doc x
 prettyexp (Eint n)      = pretty n
@@ -54,9 +57,9 @@ prettyprint (Auth p d : cs)                = parens ( align (pretty "auth" <+>  
 prettyprint (After t d : cs)               = parens ( align (pretty "after" <+> pretty t <+> prettyprint [d]) ) <> line <> align (prettyprint cs )
 prettyprint (Reveal as cs : cs')           = parens ( align (pretty "reveal" <+> parens (hsep (map pretty as) ) <+> align ( prettyprintNew cs) ) ) <> line <> align (prettyprint cs' )
 prettyprint (Put xs cs : cs')              = parens ( align (pretty "put" <+> hsep (map pretty xs) <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
-prettyprint (Revealif as pred cs : cs')    = parens ( align (pretty "revealif" <+> parens (hsep (map pretty as)) <+> prettypred pred <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
-prettyprint (PutRev xs as cs : cs')        = parens ( align (pretty "putreveal" <+> parens (hsep (map pretty xs) )<+> parens (hsep (map pretty as) ) <+> align ( prettyprintNew cs) ) ) <> line <> align (prettyprint cs' )
-prettyprint (PutRevif xs as pred cs : cs') = parens ( align (pretty "putrevealif" <+> parens (hsep (map pretty xs)) <+> parens (hsep (map pretty as)) <+> prettypred pred <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
+prettyprint (Revealif as pred cs : cs')    = parens ( align (pretty "revealif" <+> parens (hsep (map pretty as)) <+> prettypred' pred <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
+prettyprint (PutRev xs as cs : cs')        = parens ( align (pretty "putrevealif" <+> parens (hsep (map pretty xs) )<+> parens (hsep (map pretty as) ) <+> align ( prettyprintNew cs) ) ) <> line <> align (prettyprint cs' )
+prettyprint (PutRevif xs as pred cs : cs') = parens ( align (pretty "putrevealif" <+> parens (hsep (map pretty xs)) <+> parens (hsep (map pretty as)) <+> prettypred' pred <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
 
 prettyprintNew :: C -> Doc x
 prettyprintNew []   = emptyDoc

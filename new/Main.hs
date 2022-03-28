@@ -48,22 +48,22 @@ main = do
         docD = prettyprintNL participants gB cD
         renderB = renderLazy (layoutPretty defaultLayoutOptions docB)
         renderD = renderLazy (layoutPretty defaultLayoutOptions docD)
-
+    print m
     when t (TL.writeFile outB renderB)
     when t (TL.writeFile outD renderD)
 
     where 
 
         -- | INPUTS & OUTPUTS : IF YOU WANT TO TEST EDIT HERE THANK YOU :)
-        participants = p1
-        preconditions = g1
-        contract = c1
-        outB = "examples/outB.rkt"
-        outD = "examples/outD.rkt"
+        participants = p4
+        preconditions = g4
+        contract = c4
+        outB = "examples/outB-put.rkt"
+        outD = "examples/outD-put.rkt"
 
 
 -- | initial values
-tCheat = 100                                -- extra time given to check if someone has cheated
+tCheat = 10                                 -- extra time given to check if someone has cheated
 tInit  = 1                                  -- initial time
 level  = 1                                  -- initial level
 bal    = 0                                  -- initial balance

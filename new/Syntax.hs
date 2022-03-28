@@ -41,12 +41,13 @@ type Cx = [Dx]
 
 -- predicate
 data Pred   = PTrue
+            | E
             | Pand Pred Pred
             | Por Pred Pred
             | Pnot Pred
             | Peq E E
             | Pneq E E
-            | Pbtwn Pred E E
+            | Pbtwn E E E
             | Plt E E
         deriving (Eq, Ord, Show)
 
@@ -77,7 +78,7 @@ data Dx = Putx [(Xb,Xd)] Cx
         | PutRevx [(Xb,Xd)] [Sname] Cx
         | PutRevifx [(Xb,Xd)] [Sname] Pred Cx
         | Withdrawx Pname
-        | Authx Pname Dx
+        | Authx [Pname] Dx
         | Splitx [(Vb,Vd)] [Cx]
         deriving (Eq, Ord, Show)
 
@@ -108,7 +109,7 @@ data D  = Put [X] C
         | PutRev [X] [Sname] C
         | PutRevif [X] [Sname] Pred C
         | Withdraw Pname
-        | Auth Pname D
+        | Auth [Pname] D
         | Split [V] [C]
         | After Time D
        deriving (Eq,Show)

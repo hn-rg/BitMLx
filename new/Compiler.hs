@@ -10,7 +10,7 @@ import qualified Data.Map as Map
 import Data.Bifunctor as DB
 import qualified Data.Vector as V
 
-tCheat = 100                                -- extra time given to check if someone has cheated
+tCheat = 10                                -- extra time given to check if someone has cheated
 
 -- True : bitcoin
 -- False : dogecoin
