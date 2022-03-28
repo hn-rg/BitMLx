@@ -22,18 +22,23 @@ import Prettyprinter.Util
 (revealif (a b a1) (pred (= a1 (+ a b))) (withdraw "A"))
 -}
 
+{-
+          (auth "A" "B" (after 10 (putrevealif (txa) (a) (withdraw "A")))))
+-}
+
 prettypred :: Pred -> Doc x
-prettypred PTrue        = pretty "true"
-prettypred (Pand p1 p2) = parens ( pretty "pred" <+> parens ( pretty "and" <+> prettypred p1 <+> prettypred p2 ))
-prettypred (Por p1 p2) = parens ( pretty "pred" <+> parens ( pretty "or" <+> prettypred p1 <+> prettypred p2 ))
-prettypred (Pnot p)     = parens ( pretty "pred" <+> parens ( pretty "not" <+> prettypred p ))
-prettypred (Peq e1 e2)  = parens ( pretty "pred" <+> parens ( pretty "=" <+> prettyexp e1 <+> prettyexp e2) )
-prettypred (Pneq e1 e2) = parens ( pretty "pred" <+> parens ( pretty "!=" <+> prettyexp e1 <+> prettyexp e2) )
-prettypred (Plt e1 e2)  = emptyDoc
+prettypred PTrue           = pretty "true"
+prettypred (Pand p1 p2)    = parens ( pretty "pred" <+> parens ( pretty "and" <+> prettypred p1 <+> prettypred p2 ))
+prettypred (Por p1 p2)     = parens ( pretty "pred" <+> parens ( pretty "or" <+> prettypred p1 <+> prettypred p2 ))
+prettypred (Pnot p)        = parens ( pretty "pred" <+> parens ( pretty "not" <+> prettypred p ))
+prettypred (Peq e1 e2)     = parens ( pretty "pred" <+> parens ( pretty "=" <+> prettyexp e1 <+> prettyexp e2) )
+prettypred (Pneq e1 e2)    = parens ( pretty "pred" <+> parens ( pretty "!=" <+> prettyexp e1 <+> prettyexp e2) )
+prettypred (Pbtwn p e1 e2) = parens ( pretty "pred" <+> parens ( pretty "between" <+> prettypred p <+> prettyexp e1 <+> prettyexp e2) )
+prettypred (Plt e1 e2)     = emptyDoc
 
 prettyexp :: E -> Doc x
 prettyexp (Eint n)      = pretty n
-prettyexp (Elength s)   = pretty s   -- length of a secret
+prettyexp (Elength s)   = pretty s   -- usually a name of a secret to measure its length
 prettyexp (Eadd e1 e2)  = parens ( pretty "+" <+> prettyexp e1 <+> prettyexp e2)
 prettyexp (Esub e1 e2)  = parens ( pretty "-" <+> prettyexp e1 <+> prettyexp e2)
 
@@ -42,7 +47,7 @@ prettyprintSplit xs cs =  align ( pretty "split" <> line)  <+> ( align $ sep $ z
                          
 
 prettyprint :: C -> Doc x
-prettyprint []                              = emptyDoc
+prettyprint []                             = emptyDoc
 prettyprint (Withdraw p : cs)              = parens ( align ( pretty "withdraw" <+> dquotes (pretty p) ) ) <> align (prettyprint cs ) -- <> line
 prettyprint (Split xs cs : cs')            = parens ( prettyprintSplit (map pretty xs) (map prettyprintNew cs) ) <> line <> align  (prettyprint cs')  -- <> line
 prettyprint (Auth p d : cs)                = parens ( align (pretty "auth" <+> dquotes (pretty p) <+> prettyprint [d] ) ) <> line <>  align (prettyprint cs ) -- <> line
@@ -50,8 +55,8 @@ prettyprint (After t d : cs)               = parens ( align (pretty "after" <+> 
 prettyprint (Reveal as cs : cs')           = parens ( align (pretty "reveal" <+> parens (hsep (map pretty as) ) <+> align ( prettyprintNew cs) ) ) <> line <> align (prettyprint cs' )
 prettyprint (Put xs cs : cs')              = parens ( align (pretty "put" <+> hsep (map pretty xs) <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
 prettyprint (Revealif as pred cs : cs')    = parens ( align (pretty "revealif" <+> parens (hsep (map pretty as)) <+> prettypred pred <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
-prettyprint (PutRev xs as cs : cs')        = emptyDoc
-prettyprint (PutRevif xs as pred cs : cs') = emptyDoc
+prettyprint (PutRev xs as cs : cs')        = parens ( align (pretty "putreveal" <+> parens (hsep (map pretty xs) )<+> parens (hsep (map pretty as) ) <+> align ( prettyprintNew cs) ) ) <> line <> align (prettyprint cs' )
+prettyprint (PutRevif xs as pred cs : cs') = parens ( align (pretty "putrevealif" <+> parens (hsep (map pretty xs)) <+> parens (hsep (map pretty as)) <+> prettypred pred <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
 
 prettyprintNew :: C -> Doc x
 prettyprintNew []   = emptyDoc

@@ -24,6 +24,8 @@ type Level = Int
 
 type Time = Int
 
+-- | should be: Authx [Pname] Dx
+-- instead of Authx Pname Dx
 
 -- |     BitMLx Syntax
 
@@ -44,6 +46,7 @@ data Pred   = PTrue
             | Pnot Pred
             | Peq E E
             | Pneq E E
+            | Pbtwn Pred E E
             | Plt E E
         deriving (Eq, Ord, Show)
 

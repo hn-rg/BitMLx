@@ -58,8 +58,8 @@ main = do
         participants = p1
         preconditions = g1
         contract = c1
-        outB = "outB.rkt"
-        outD = "outD.rkt"
+        outB = "examples/outB.rkt"
+        outD = "examples/outD.rkt"
 
 
 -- | initial values
