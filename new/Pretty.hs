@@ -50,7 +50,7 @@ prettyprint :: C -> Doc x
 prettyprint []                             = emptyDoc
 prettyprint (Withdraw p : cs)              = parens ( align ( pretty "withdraw" <+> dquotes (pretty p) ) ) <> align (prettyprint cs ) -- <> line
 prettyprint (Split xs cs : cs')            = parens ( prettyprintSplit (map pretty xs) (map prettyprintNew cs) ) <> line <> align  (prettyprint cs')  -- <> line
-prettyprint (Auth p d : cs)                = parens ( align (pretty "auth" <+> dquotes (pretty p) <+> prettyprint [d] ) ) <> line <>  align (prettyprint cs ) -- <> line
+prettyprint (Auth p d : cs)                = parens ( align (pretty "auth" <+>  (hsep (map (dquotes . pretty) p) ) <+> prettyprint [d] ) ) <> line <>  align (prettyprint cs ) -- <> line
 prettyprint (After t d : cs)               = parens ( align (pretty "after" <+> pretty t <+> prettyprint [d]) ) <> line <> align (prettyprint cs )
 prettyprint (Reveal as cs : cs')           = parens ( align (pretty "reveal" <+> parens (hsep (map pretty as) ) <+> align ( prettyprintNew cs) ) ) <> line <> align (prettyprint cs' )
 prettyprint (Put xs cs : cs')              = parens ( align (pretty "put" <+> hsep (map pretty xs) <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
