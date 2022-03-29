@@ -1,62 +1,27 @@
 #lang bitml
 
+(participant "A" "0339bd7fade9167e09681d68c5fc80b72166fe55bbb84211fd12bde1d57247fbe1")
+(participant "B" "034a7192e922118173906555a39f28fa1e0b65657fc7f403094da4f85701a5f809")
+
 (debug-mode)
 
-(participant "A" "txA")
-(participant "B" "txB")
+
+(define (txA) "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@1")
 
 (contract
- (pre
-  (deposit "A" 1 "x1")
-  (deposit "A" 1 "x1col")
-  (secret "A" a "aaa")
-  (secret "A" b "bbb")
-  (secret "A" s1Ab "001Ab")
-  (secret "A" s2Ab "002Ab")
-  (secret "A" s1Ad "001Ad")
-  (secret "A" s2Ad "002Ad")
-  (deposit "B" 1 "y1col")
-  (secret "B" s1Bb "001Bb")
-  (secret "B" s2Bb "002Bb")
-  (secret "B" s1Bd "001Bd")
-  (secret "B" s2Bd "002Bd")
-  )
+ (pre (deposit "A" 1 (ref (txA))) (secret "A" a "aaa"))
+ 
+ (split
+  (0.1 -> (revealif (a) (pred (= a 1)) (withdraw "A")))
+  (0.1 -> (revealif (a) (pred (= a 2)) (withdraw "A")))
+  (0.1 -> (revealif (a) (pred (= a 3)) (withdraw "A")))
+  (0.1 -> (revealif (a) (pred (= a 4)) (withdraw "A")))
+  (0.1 -> (revealif (a) (pred (= a 5)) (withdraw "A")))
+  (0.1 -> (revealif (a) (pred (= a 6)) (withdraw "A")))
+  (0.1 -> (revealif (a) (pred (= a 7)) (withdraw "A")))
+  (0.1 -> (revealif (a) (pred (= a 8)) (withdraw "A")))
+  (0.1 -> (revealif (a) (pred (= a 9)) (withdraw "A")))
+  (0.1 -> (revealif (a) (pred (!= a 1)) (withdraw "A"))))
 
- (choice
-  (revealif (s1Ab a b) (pred (not (< a b))) (split
-                                              (1 -> (withdraw "A"))
-                                              (2 -> (withdraw "A")))
-   )
-  (revealif (s1Bb a b) (pred (not (< a b))) (split
-                                              (1 -> (withdraw "A"))
-                                              (2 -> (withdraw "A")))
-   )
-  (after 1 (reveal (s1Ad) (split
-                            )
-                          )
-   )
-  (after 1 (reveal (s1Bd) (split
-                            (3 -> (withdraw "A")))
-                          )
-   )
-  (after 11 (revealif (s2Ab a b) (pred (not (< (- b 1) b))) (split
-                                                              (1 -> (withdraw "A"))
-                                                              (2 -> (withdraw "A")))
-             )
-   )
-  (after 11 (revealif (s2Bb a b) (pred (not (< (- b 1) b))) (split
-                                                              (1 -> (withdraw "A"))
-                                                              (2 -> (withdraw "A")))
-             )
-   )
-  (after 11 (after 22 (reveal (s2Ad) (split
-                                       )
-                                     )
-             )
-   )
-  (after 11 (after 22 (reveal (s2Bd) (split
-                                       (3 -> (withdraw "A")))
-                                     )
-             )
-   )
-  ))
+ ;(auto-generate-secrets)
+ (check-liquid (strategy "A" (do-reveal a))))

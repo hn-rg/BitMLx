@@ -32,13 +32,13 @@ import Prettyprinter.Util
 
 prettypred :: Pred -> Doc x
 prettypred PTrue           = pretty "true"
-prettypred (Pand p1 p2)    = parens ( pretty "and" <+> prettypred p1 <+> prettypred p2 )
-prettypred (Por p1 p2)     = parens ( pretty "or" <+> prettypred p1 <+> prettypred p2 )
-prettypred (Pnot p)        = parens ( pretty "not" <+> prettypred p )
-prettypred (Peq e1 e2)     = parens ( pretty "=" <+> prettyexp e1 <+> prettyexp e2) 
-prettypred (Pneq e1 e2)    = parens ( pretty "!=" <+> prettyexp e1 <+> prettyexp e2)
-prettypred (Pbtwn p e1 e2) = parens ( pretty "between" <+> prettyexp p <+> prettyexp e1 <+> prettyexp e2)
-prettypred (Plt e1 e2)     = parens ( pretty "<" <+> prettyexp e1 <+> prettyexp e2)
+prettypred (Pand p1 p2)    = parens $ pretty "and" <+> prettypred p1 <+> prettypred p2 
+prettypred (Por p1 p2)     = parens $ pretty "or" <+> prettypred p1 <+> prettypred p2 
+prettypred (Pnot p)        = parens $ pretty "not" <+> prettypred p 
+prettypred (Peq e1 e2)     = parens $ pretty "=" <+> prettyexp e1 <+> prettyexp e2 
+prettypred (Pneq e1 e2)    = parens $ pretty "!=" <+> prettyexp e1 <+> prettyexp e2
+prettypred (Pbtwn p e1 e2) = parens $ pretty "between" <+> prettyexp p <+> prettyexp e1 <+> prettyexp e2
+prettypred (Plt e1 e2)     = parens $ pretty "<" <+> prettyexp e1 <+> prettyexp e2
 
 prettypred' :: Pred -> Doc x
 prettypred' p = parens $ pretty "pred" <+> prettypred p
@@ -46,8 +46,8 @@ prettypred' p = parens $ pretty "pred" <+> prettypred p
 prettyexp :: E -> Doc x
 prettyexp (Eint n)      = pretty n
 prettyexp (Elength s)   = pretty s   -- usually a name of a secret to measure its length
-prettyexp (Eadd e1 e2)  = parens ( pretty "+" <+> prettyexp e1 <+> prettyexp e2)
-prettyexp (Esub e1 e2)  = parens ( pretty "-" <+> prettyexp e1 <+> prettyexp e2)
+prettyexp (Eadd e1 e2)  = parens $ pretty "+" <+> prettyexp e1 <+> prettyexp e2
+prettyexp (Esub e1 e2)  = parens $ pretty "-" <+> prettyexp e1 <+> prettyexp e2
 
 prettyprintSplit :: [Doc a] -> [Doc a] -> Doc a
 prettyprintSplit xs cs =  align ( pretty "split" <> line)  <+> ( align $ sep $ zipWith ( \x y -> parens (x <+> (pretty "->") <+> y) ) xs cs)
