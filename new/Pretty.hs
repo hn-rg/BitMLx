@@ -26,6 +26,10 @@ import Prettyprinter.Util
           (auth "A" "B" (after 10 (putrevealif (txa) (a) (withdraw "A")))))
 -}
 
+
+-- | to check all the possible predicates!!!!
+
+
 prettypred :: Pred -> Doc x
 prettypred PTrue           = pretty "true"
 prettypred (Pand p1 p2)    = parens ( pretty "and" <+> prettypred p1 <+> prettypred p2 )
