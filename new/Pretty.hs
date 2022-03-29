@@ -27,7 +27,7 @@ import Prettyprinter.Util
 -}
 
 
--- | to check all the possible predicates!!!!
+-- | to check all the possible predicates!!!
 
 
 prettypred :: Pred -> Doc x
