@@ -98,5 +98,5 @@ g4 = [  Depx "A" (1, 1) ("x1", "x2"),
 c4 :: Cx
 c4 = [ Putx [("x1","x2"), ("y1","y2")] [Withdrawx "A"]
      ]
-
+-- end of example 4
 
