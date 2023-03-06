@@ -13,17 +13,16 @@ build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:  README.md
 
-executable bitmlx
+library
   hs-source-dirs:      new
-  main-is:             Main.hs
-  other-modules: 
+  exposed-modules:
+    Runner
     Compiler
     Syntax
-    Examples
-    Trifunctor
+  other-modules:
     Auxiliary
+    Trifunctor
     Pretty
-  default-language:    Haskell2010
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends: 
     text,
@@ -32,4 +31,14 @@ executable bitmlx
     vector-algorithms,
     containers,
     base >= 4.7 && < 5
+  default-language:    Haskell2010
     
+executable bitmlx-exe
+  main-is:             Main.hs
+  hs-source-dirs:      app
+  other-modules:       Examples
+  build-depends:
+      base >=4.7 && <5
+    , bitmlx
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010

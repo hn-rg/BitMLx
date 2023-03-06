@@ -1,3 +1,8 @@
+{-|
+Module      : Pretty
+Description : Pretty printer for BitML|| contracts.
+-}
+
 module Pretty where
 
 import Syntax 

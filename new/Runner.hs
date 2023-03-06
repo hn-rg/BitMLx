@@ -1,10 +1,13 @@
+{-|
+Module      : Runner
+Description : Entry point for running the compiler.
+-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 {-# LANGUAGE ParallelListComp #-}
-module Main where
+module Runner where
 
 import Syntax
 import Compiler
-import Examples
 import Auxiliary
 import Pretty
 
@@ -17,11 +20,13 @@ import Prettyprinter.Render.Text
 import Prettyprinter.Internal
 import Data.Text.Lazy.IO as TL
 
--- |     Goal :
---  BitMLx ---> / preprocessing / ---> / compilation / ---> BitML||
-
-main :: IO ()
-main = do
+-- | Runs the compiler for a given scenario using predefined initial values. It then 
+-- renders the resulting contract to text and writes them to specified file paths.
+--
+-- TODO: this should probably return the (maybe) rendered contracts as strings,
+-- or even the actual contracts and leave the file writing as a concern for the app.
+runCompiler :: Pl -> Gxl -> Cx -> String -> String -> IO ()
+runCompiler participants preconditions contract outB outD = do
     let
         n = length participants                        -- number of participants
         (u1, u2, col1, col2, dep1, dep2, vol1, vol2) = balCol preconditions bal bal bal bal v1 v2 vd1 vd2          -- balance of contract + collaterals
@@ -52,26 +57,34 @@ main = do
     when t (TL.writeFile outB renderB)
     when t (TL.writeFile outD renderD)
 
-    where 
 
-        -- | INPUTS & OUTPUTS : IF YOU WANT TO TEST EDIT HERE THANK YOU :)
-        participants = p4
-        preconditions = g4
-        contract = c4
-        outB = "examples/outB-put.rkt"
-        outD = "examples/outD-put.rkt"
+---------------------------------------
+-- Initial variables for the compiler
+---------------------------------------
 
+-- | Extra time given to check if someone has cheated
+tCheat = 10 :: Time
 
--- | initial values
-tCheat = 10                                 -- extra time given to check if someone has cheated
-tInit  = 1                                  -- initial time
-level  = 1                                  -- initial level
-bal    = 0                                  -- initial balance
-v      = V.empty :: V.Vector (Pname, Sname) -- for secrets
-v1     = V.empty :: V.Vector (Pname, Vb)    -- for bitcoin deposits
-v2     = V.empty :: V.Vector (Pname, Vd)    -- for othercoin deposits
-vd1    = Map.empty :: Map.Map Xb Vb       -- for bitcoin volatile deposits
-vd2    = Map.empty :: Map.Map Xd Vd       -- for othercoin volatile deposits
+-- | Initial time
+tInit  = 1 :: Time
 
+-- | Initial level
+level  = 1 :: Level
 
+-- Initial balance
+bal    = 0 :: Vd                                 
 
+-- | For secrets
+v      = V.empty :: V.Vector (Pname, Sname)
+
+-- | For bitcoin deposits
+v1     = V.empty :: V.Vector (Pname, Vb)
+
+-- | For othercoin deposits
+v2     = V.empty :: V.Vector (Pname, Vd)
+
+-- | For bitcoin volatile deposits
+vd1    = Map.empty :: Map.Map Xb Vb
+
+-- | For othercoin volatile deposits
+vd2    = Map.empty :: Map.Map Xd Vd

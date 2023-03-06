@@ -1,3 +1,10 @@
+{-|
+Module      : Compiler
+Description : Implementation for the BitMLx -> BitML// compiler.
+
+This implementation is actually outdated and should be rewritten.
+-}
+
 {-# LANGUAGE ParallelListComp #-}
 
 module Compiler where
@@ -10,7 +17,8 @@ import qualified Data.Map as Map
 import Data.Bifunctor as DB
 import qualified Data.Vector as V
 
-tCheat = 10                                -- extra time given to check if someone has cheated
+-- | Extra time given to check if someone has cheated
+tCheat = 10 :: Time
 
 -- True : bitcoin
 -- False : dogecoin

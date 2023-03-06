@@ -1,3 +1,7 @@
+{-|
+Module      : Syntax
+Description : Syntax definitions for BitMLx and BitML//.
+-}
 module Syntax where
 
 type Pname = String
