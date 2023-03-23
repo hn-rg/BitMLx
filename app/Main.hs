@@ -5,17 +5,18 @@ import Prettyprinter.Internal
     ( layoutPretty, defaultLayoutOptions )
 import Data.Text.Lazy.IO as TL ( writeFile )
 
-import Compiler ( compileD, compileG )
+import Compiler ( compileC, compileD, compilePreconditions, initialSettings )
 import Pretty ( prettyprintNL )
 
-import Examples.Withdraw
+import Examples.PriorityChoice
     ( exampleName, participants, preconditions, contract )
 
 main :: IO ()
 main = do
-    let (bG, dG) = compileG preconditions
-    case compileD preconditions contract of
-        Just (bD, dD) -> do
+    let (bG, dG) = compilePreconditions preconditions
+        settings = initialSettings preconditions
+    case compileC settings contract of
+        Right (bD, dD) -> do
             let            
                 bitcoinOutPath = "output/" ++ exampleName ++ "_bitcoin.rkt"
                 dogecoinOutPath = "output/" ++ exampleName ++ "_dogecoin.rkt"
@@ -26,4 +27,4 @@ main = do
                 renderD = renderLazy (layoutPretty defaultLayoutOptions docD)
             TL.writeFile bitcoinOutPath renderB
             TL.writeFile dogecoinOutPath renderD
-        Nothing -> print "Compilation error"
+        Left (errorType, errorDetails) -> print $ show errorType ++ ": " ++ errorDetails

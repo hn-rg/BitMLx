@@ -10,7 +10,7 @@ Use import qualified to avoid ambiguity with BitMLx syntax.
 -}
 module Syntax.BitML where
 
-import Syntax.Common
+import Syntax.Common ( Deposit, P, Pred, SHash, SName, Time )
 
 -- | BitML contract preconditions
 -- The arguments are for the coins and deposit types respectively.

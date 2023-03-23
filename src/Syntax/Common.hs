@@ -1,39 +1,36 @@
 {-|
 Module      : Syntax.Common
 Description : Common types for BitMLx and BitML syntax.
-
-Notice that we define separate types for coins and transactions
-that live on different blockchains.
 -}
 module Syntax.Common where
 
--- | Participant names like "A", "B", etc
+-- A participant in the contract
 data P = P {
+    -- | The participant's name, like "A", "B", etc.
     pname :: String,
+    -- | The participant's public key.
     pk :: String
 } deriving (Eq, Ord, Show)
 
--- | A Bitcoin-denominated value
-type BCoins = Int
-
--- | A Dogecoin-denominated value
-type DCoins = Int
-
--- | A name for a deposit representing a transaction in some blockchain
+-- | A name for a deposit representing a transaction in some blockchain.
 type Deposit = String
 
--- | A name for a secret
+-- | A name for a secret.
 type SName = String
 
--- | A hash for a secret
+-- | A hash for a secret.
 type SHash = String
 
--- | Time passing on the contract execution
+-- | Time passing on the contract execution.
 type Time = Int
+
+-- | A unique identifier for a priority choice in the contract's choice
+-- tree, formed by the path from the root to get to it.
+type NodeLabel = String
 
 -- | Logical predicates
 data Pred =
-    PTrue
+    PTrue 
     | PAnd Pred Pred
     | POr Pred Pred
     | PNot Pred
@@ -43,9 +40,9 @@ data Pred =
     | PLt E E
     deriving (Eq, Ord, Show)
 
--- Arithmetic expressions for logical predicates
+-- Arithmetic expressions for logical predicates.
 data E  = EInt Integer
-    -- | Length of a secret
+    -- | Length of a secret.
     | ELength SName
     | EAdd E E
     | ESub E E
