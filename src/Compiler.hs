@@ -1,19 +1,17 @@
-module Compiler (compileG, compileD) where
+{-|
+Module      : Compiler
+Description : BitMLx to BitML compiler.
 
-import Syntax.Common ( DCoins, BCoins, Deposit )
+-}
+module Compiler (compilePreconditions, compileC, compileD, CompilerSettings(..), initialSettings) where
+
+import Data.Map.Strict (empty)
+
+import Coins ( Coins, BCoins, DCoins)
+import Syntax.Common ( Deposit, Time, SName, P )
 import qualified Syntax.BitML as BitML
 import qualified Syntax.BitMLx as BitMLx
-import Compiler.Withdraw ( compileWithdraw )
-import Compiler.Preconditions ( compileG )
-
-
-type CompilationResult = (BitML.C BCoins, BitML.C DCoins)
-
--- | Given a BitMLx contract and it's preconditions, compile to a a Bitcoin BitML and a Dogecoin BitML contract.
--- This is the entry point for the compiler, but we delegate each compilation case to auxiliary modules.
--- TODO: This signature should later be extended to include settings and current compiler state.
--- TODO: Better compilation errors using Either CompilationResult CompilationError 
-compileD :: [BitMLx.G] -> BitMLx.D -> Maybe CompilationResult
-compileD gs d = case d of
-    BitMLx.Withdraw p -> Just (compileWithdraw gs p)
-    _notImplementedYet -> Nothing
+import Compiler.Common ( CompilationError, CompilationResult, ErrorType (..) )
+import Compiler.Settings ( CompilerSettings(..), initialSettings )
+import Compiler.Contract( compileC, compileD )
+import Compiler.Preconditions ( compilePreconditions )

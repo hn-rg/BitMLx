@@ -16,14 +16,19 @@ extra-source-files:  README.md
 library
   hs-source-dirs:      src
   exposed-modules:
-    Compiler
+    Coins
     Syntax.BitMLx
     Syntax.BitML
     Syntax.Common
+    Compiler
     Pretty
   other-modules:
+    Compiler.Common
+    Compiler.Settings
+    Compiler.Contract
     Compiler.Withdraw
     Compiler.Preconditions
+    Compiler.PriorityChoice
     Auxiliary
     Trifunctor
   build-depends: 
@@ -37,7 +42,8 @@ library
 executable bitmlx-exe
   main-is:             Main.hs
   hs-source-dirs:      app
-  other-modules:       Examples.Withdraw
+  other-modules:
+    Examples.PriorityChoice
   build-depends:
       base >=4.7 && <5
     , bitmlx
