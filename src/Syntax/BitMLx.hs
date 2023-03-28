@@ -76,9 +76,11 @@ data D =
     -- The contract ends and each participant is refunded their collateral.
     | Withdraw P
     -- | Splits the contract into many subcontracts.
-    -- The numeric parameters are the percentages of the balance each
-    -- subcontract takes on each blockchain. The percentages on each
-    -- blockchain should add up to 1.
+    -- The numeric Rational are the proportions of the balance each
+    -- subcontract takes on each Bitcoin and Dogecoin respectively.
+    --
+    -- The proportions should be numbers between 0 and 1, and
+    -- they should add up to 1 on each blockchain. 
     | Split [((Rational, Rational), C)]
     deriving (Eq, Ord, Show)
 
