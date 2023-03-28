@@ -26,7 +26,7 @@ type Time = Int
 
 -- | A unique identifier for a priority choice in the contract's choice
 -- tree, formed by the path from the root to get to it.
-type NodeLabel = String
+type NodeLabel = (String, String)
 
 -- | Logical predicates
 data Pred =

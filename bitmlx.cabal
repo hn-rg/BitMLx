@@ -23,12 +23,13 @@ library
     Compiler
     Pretty
   other-modules:
-    Compiler.Common
+    Compiler.Error
     Compiler.Settings
     Compiler.Contract
     Compiler.Withdraw
     Compiler.Preconditions
     Compiler.PriorityChoice
+    Compiler.Split
     Auxiliary
     Trifunctor
   build-depends: 
@@ -44,6 +45,7 @@ executable bitmlx-exe
   hs-source-dirs:      app
   other-modules:
     Examples.PriorityChoice
+    Examples.Split
   build-depends:
       base >=4.7 && <5
     , bitmlx

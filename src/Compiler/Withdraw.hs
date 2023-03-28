@@ -13,15 +13,10 @@ import Data.List (delete)
 -- | A withdraw statement in BitMLx is compiled in BitML as a split between:
 -- - The corresponding withdraw statement for the specified participant.
 -- - For each participant, a withdraw of their collateral.
-compileWithdraw :: CompilerSettings -> P -> (BitML.C BCoins, BitML.C DCoins)
+compileWithdraw :: Coins c => CompilerSettings c -> P -> BitML.D c
 compileWithdraw CompilerSettings{..} p =
-    let
-        others = delete p participants
-        compileWithdraw' :: Coins c => c -> c -> BitML.C c
-        compileWithdraw' balance collateral =  [
-                BitML.Split (
-                    (balance + collateral, [BitML.Withdraw p])
-                    : map (\p' -> (collateral, [BitML.Withdraw p'])) others
-                )
-            ]
-    in (compileWithdraw' bitcoinBalance bitcoinCollateral, compileWithdraw' dogecoinBalance dogecoinCollateral)
+    BitML.Split (
+            (balance + collateral, [BitML.Withdraw p])
+            : map (\p' -> (collateral, [BitML.Withdraw p'])) others
+        )
+    where others = delete p participants

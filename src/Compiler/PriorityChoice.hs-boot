@@ -1,10 +1,10 @@
 module Compiler.PriorityChoice where
 
-import Coins ( Coins, BCoins, DCoins )
-import Syntax.Common ( P, Deposit, Time )
+import Coins ( Coins )
+import Syntax.Common ( P, Time )
 import qualified Syntax.BitML as BitML
 import qualified Syntax.BitMLx as BitMLx
-import Compiler.Common ( CompilationError, CompilationResult )
+import Compiler.Error ( CompilationError )
 import Compiler.Settings ( CompilerSettings )
 
-compilePriorityChoice :: CompilerSettings -> BitMLx.D -> BitMLx.C -> Maybe Time -> Either CompilationError CompilationResult
+compilePriorityChoice :: Coins c => CompilerSettings c -> BitMLx.D -> BitMLx.C -> Maybe Time -> Either CompilationError (BitML.C c)

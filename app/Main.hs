@@ -5,26 +5,24 @@ import Prettyprinter.Internal
     ( layoutPretty, defaultLayoutOptions )
 import Data.Text.Lazy.IO as TL ( writeFile )
 
-import Compiler ( compileC, compileD, compilePreconditions, initialSettings )
+import Compiler ( compile )
 import Pretty ( prettyprintNL )
 
-import Examples.PriorityChoice
+import Examples.Split
     ( exampleName, participants, preconditions, contract )
 
 main :: IO ()
 main = do
-    let (bG, dG) = compilePreconditions preconditions
-        settings = initialSettings preconditions
-    case compileC settings contract of
-        Right (bD, dD) -> do
+    case compile preconditions contract of
+        Right ((bitcoinPreconditions, bitcoinContract), (dogecoinPreconditions, dogecoinContract)) -> do
             let            
                 bitcoinOutPath = "output/" ++ exampleName ++ "_bitcoin.rkt"
                 dogecoinOutPath = "output/" ++ exampleName ++ "_dogecoin.rkt"
 
-                docB = prettyprintNL participants bG bD 
-                docD = prettyprintNL participants dG dD
-                renderB = renderLazy (layoutPretty defaultLayoutOptions docB)
-                renderD = renderLazy (layoutPretty defaultLayoutOptions docD)
-            TL.writeFile bitcoinOutPath renderB
-            TL.writeFile dogecoinOutPath renderD
-        Left (errorType, errorDetails) -> print $ show errorType ++ ": " ++ errorDetails
+                bitcoinDoc = prettyprintNL participants bitcoinPreconditions bitcoinContract 
+                dogecoinDoc = prettyprintNL participants dogecoinPreconditions dogecoinContract
+                renderBitcoin = renderLazy (layoutPretty defaultLayoutOptions bitcoinDoc)
+                renderDogecoin = renderLazy (layoutPretty defaultLayoutOptions dogecoinDoc)
+            TL.writeFile bitcoinOutPath renderBitcoin
+            TL.writeFile dogecoinOutPath renderDogecoin
+        Left compilationError -> print $ show compilationError

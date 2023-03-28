@@ -9,7 +9,7 @@ import qualified Syntax.BitML as BitML
 import qualified Syntax.BitMLx as BitMLx
 import Syntax.Common ( P (pname), Deposit, Time(..), SName(..), NodeLabel )
 import {-# SOURCE #-} Compiler.Contract (compileC, compileD)
-import Compiler.Common ( CompilationResult, CompilationError, ErrorType (..) )
+import Compiler.Error ( CompilationError(..) )
 import Compiler.Settings ( CompilerSettings (..) )
 
 
@@ -20,25 +20,17 @@ import Compiler.Settings ( CompilerSettings (..) )
 --      we punish them by splitting their collateral on this chain among everyone else. The honest participants
 --      then also receive a refund for their deposits and their collaterals.
 --    - If time t' passes and everyone is skipping synchronously, then we execute C.
-compilePriorityChoice :: CompilerSettings -> BitMLx.D -> BitMLx.C -> Maybe Time -> Either CompilationError CompilationResult
-compilePriorityChoice settings@CompilerSettings{..} d c overrideTimeout =
-    do
-        (bitcoinD, dogecoinD) <- compileD settings{currentLabel = currentLabel ++ "L", currentTime = currentTime + elapseTime} d
-        (bitcoinC, dogecoinC) <- compileC settings{currentLabel = currentLabel ++ "R", currentTime = currentTime + 2 * elapseTime} c
-        bitcoinStepSecrets <- eitherLookup currentLabel bitcoinStepSecretsMap (StepSecretsNotFound, "Bitcoin: " ++ currentLabel)
-        dogecoinStepSecrets <- eitherLookup currentLabel dogecoinStepSecretsMap (StepSecretsNotFound, "Dogecoin: " ++ currentLabel)
-        bitcoinResult <- compilePriorityChoice' bitcoinStepSecrets dogecoinStepSecrets bitcoinBalance bitcoinD bitcoinC
-        dogecoinResult <- compilePriorityChoice' dogecoinStepSecrets bitcoinStepSecrets dogecoinBalance dogecoinD dogecoinC
-        Right (bitcoinResult, dogecoinResult)
-    where
-        compilePriorityChoice' :: Coins c =>  Map P SName -> Map P SName -> c -> BitML.C c -> BitML.C c -> Either CompilationError (BitML.C c)
-        compilePriorityChoice' activeStepSecrets pasiveStepSecrets balance d' c' = do
-            let t = currentTime + elapseTime
-                t' = currentTime + 2 * elapseTime
-                newSettings =  settings { currentTime = currentTime + 2 * elapseTime }
-            punish <- punishAnyone participants balance pasiveStepSecrets
-            let skip = tau (punish ++ [BitML.After t' (tau c') | c' /= []])
-            Right (revealAny (elems activeStepSecrets) d' ++ [BitML.After t skip])
+compilePriorityChoice :: Coins c => CompilerSettings c -> BitMLx.D -> BitMLx.C -> Maybe Time -> Either CompilationError (BitML.C c)
+compilePriorityChoice settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel), ..} d c overrideTimeout = do
+        d' <- compileD settings{currentLabel = (choiceLabel ++ "L", splitLabel), currentTime = currentTime + elapseTime} d
+        c' <- compileC settings{currentLabel = (choiceLabel ++ "R", splitLabel), currentTime = currentTime + 2 * elapseTime} c
+        thisChainStepSecrets <- eitherLookup (choiceLabel, splitLabel) thisChainStepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
+        otherChainStepSecrets <- eitherLookup (choiceLabel, splitLabel) otherChainStepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
+        punish <- punishAnyone participants balance otherChainStepSecrets
+        let t = currentTime + elapseTime
+            t' = currentTime + 2 * elapseTime
+            skip = tau (punish ++ [BitML.After t' (tau c') | c' /= []])
+        Right (revealAny (elems thisChainStepSecrets) [d'] ++ [BitML.After t skip])
 
 -- | Small cheat to convert a guarded contract into a contract.
 -- Notice that the price of using tau is that it introduces an
@@ -47,6 +39,8 @@ tau :: BitML.C c -> BitML.D c
 tau = BitML.Reveal []
 
 -- | Auxiliary function to convert a lookup from Maybe to Either
+-- takes as argument the error to throw if the lookup
+-- returns nothing.
 eitherLookup :: Ord k => k -> Map k v -> e -> Either e v
 eitherLookup k m e = case lookup k m of
     Just v -> Right v
@@ -67,19 +61,10 @@ sequenceEither (Right x : xs) =
 revealAny :: Coins c =>  [SName] -> BitML.C c -> BitML.C c
 revealAny secrets continuation = map (\s -> BitML.Reveal [s] continuation) secrets
 
--- | Auxiliary function to divide some value of coins into many.
--- Because coins are integer values, we return a compilation error
--- if the division is not possible.
-divideCoins :: Coins c => c -> Int -> Either CompilationError c
-divideCoins coins divisor
-  | divisor == 0 = Left (NonDividableCollaterals, "Division by zero")
-  | coins `mod` fromIntegral divisor /= 0 = Left (NonDividableCollaterals, "Coins are not divisible by divisor")
-  | otherwise = Right (coins `div` fromIntegral divisor)
-
 -- | Punish a participant by splitting it's collateral among all others.
 punishOne :: Coins c => P -> [P] -> c -> Map P SName -> Either CompilationError (BitML.D c)
 punishOne punishedParticipant honestParticipants balance stepSecrets = do
-    secret <- eitherLookup punishedParticipant stepSecrets (StepSecretsNotFound, pname punishedParticipant)
+    secret <- eitherLookup punishedParticipant stepSecrets (StepSecretsNotFoundForParticipant punishedParticipant)
     let executePunishment = BitML.Split (map (\p -> (balance, [BitML.Withdraw p])) honestParticipants)
     Right (BitML.Reveal [secret] [executePunishment])
 
