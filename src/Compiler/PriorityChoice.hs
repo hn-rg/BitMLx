@@ -65,7 +65,12 @@ revealAny secrets continuation = map (\s -> BitML.Reveal [s] continuation) secre
 punishOne :: Coins c => P -> [P] -> c -> Map P SName -> Either CompilationError (BitML.D c)
 punishOne punishedParticipant honestParticipants balance stepSecrets = do
     secret <- eitherLookup punishedParticipant stepSecrets (StepSecretsNotFoundForParticipant punishedParticipant)
-    let executePunishment = BitML.Split (map (\p -> (balance, [BitML.Withdraw p])) honestParticipants)
+    let executePunishment = if length honestParticipants > 1
+        then
+            BitML.Split (map (\p -> (balance, [BitML.Withdraw p])) honestParticipants)
+        else
+            -- Optimization: Avoid having a single branch split.
+            BitML.Withdraw (head honestParticipants)
     Right (BitML.Reveal [secret] [executePunishment])
 
 -- | Given a list tuples (p, c, s) where p is the participant, c  is the value of their collateral
