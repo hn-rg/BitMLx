@@ -16,19 +16,11 @@
   )
 
  (choice
-  (reveal (A_Bitcoin_S_Name) (split
-                               (2 -> (withdraw "A")) (0 -> (withdraw "B")))
-                             )
-  (reveal (B_Bitcoin_S_Name) (split
-                               (2 -> (withdraw "A")) (0 -> (withdraw "B")))
-                             )
+  (reveal (A_Bitcoin_S_Name) (withdraw "A"))
+  (reveal (B_Bitcoin_S_Name) (withdraw "A"))
   (after 11 (reveal () (choice
-                        (reveal (A_Dogecoin_S_Name) (split
-                                                      (2 -> (withdraw "B")))
-                                                    )
-                        (reveal (B_Dogecoin_S_Name) (split
-                                                      (2 -> (withdraw "A")))
-                                                    )
+                        (reveal (A_Dogecoin_S_Name) (withdraw "B"))
+                        (reveal (B_Dogecoin_S_Name) (withdraw "A"))
                         ))
    )
   ))

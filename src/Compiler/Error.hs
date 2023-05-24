@@ -23,4 +23,4 @@ data CompilationError =
     | StepSecretsNotFoundForParticipant P
     -- | Not implemented yet.
     | NotImplemented
-    deriving Show
+    deriving (Show, Eq)

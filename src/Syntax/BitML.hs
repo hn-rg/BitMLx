@@ -11,6 +11,7 @@ Use import qualified to avoid ambiguity with BitMLx syntax.
 module Syntax.BitML where
 
 import Syntax.Common ( Deposit, P, Pred, SHash, SName, Time )
+import Coins (Coins)
 
 -- | BitML contract preconditions
 -- The arguments are for the coins and deposit types respectively.
@@ -37,3 +38,8 @@ data D c =
     | Split [(c, C c)]
     | After Time (D c)
     deriving (Eq, Show)
+
+
+-- | Shorthand operator for deposits.
+(!) :: Coins c => P -> c -> Deposit -> G c
+(p ! v) x = Deposit p v x

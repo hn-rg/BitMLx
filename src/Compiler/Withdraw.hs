@@ -15,8 +15,12 @@ import Data.List (delete)
 -- - For each participant, a withdraw of their collateral.
 compileWithdraw :: Coins c => CompilerSettings c -> P -> BitML.D c
 compileWithdraw CompilerSettings{..} p =
-    BitML.Split (
-            (balance + collateral, [BitML.Withdraw p])
-            : map (\p' -> (collateral, [BitML.Withdraw p'])) others
-        )
+    if length participants > 2 then
+        BitML.Split (
+                (balance + collateral, [BitML.Withdraw p])
+                : map (\p' -> (collateral, [BitML.Withdraw p'])) others
+            )
+    else
+        -- Optimization: Avoid having a single branch split.
+        BitML.Withdraw p
     where others = delete p participants
