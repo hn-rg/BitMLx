@@ -1,4 +1,4 @@
-module TestSplit.Bitcoin where
+module TestPriorityChoice.Bitcoin where
 
 import Test.Tasty ( defaultMain, testGroup, TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=) )
@@ -17,25 +17,21 @@ pB = P {pname = "B", pk = "pkB"}
 
 preconditions :: [G BCoins]
 preconditions = [
-    pA ! 2 $ "bd_A"
-    , pB ! 2 $ "bd_B"
+    pA ! 1 $ "bd_A"
+    , pB ! 1 $ "bd_B"
     , pA ! 0 $ "bc_A"
     , pB ! 0 $ "bc_B"
-    , Secret pA "A_Bitcoin_S_Name__" "A_Bitcoin_S_Hash__"
-    , Secret pB "B_Bitcoin_S_Name__" "B_Bitcoin_S_Hash__"
+    , Secret pA "A_Bitcoin_S_Name_L_" "__SOME_HASH__"
+    , Secret pB "B_Bitcoin_S_Name_L_" "__SOME_HASH__"
     ]
 
 contract :: C BCoins
 contract = [
-  Reveal ["A_Bitcoin_S_Name__"] [doSplit],
-  Reveal ["B_Bitcoin_S_Name__"] [doSplit] 
-  ]
+    Reveal ["A_Bitcoin_S_Name_L_"] [Withdraw pA]
+    , Reveal ["B_Bitcoin_S_Name_L_"] [Withdraw pA],
+    After 11 (
+        Reveal [] [Reveal ["A_Dogecoin_S_Name_L_"] [Withdraw pB],
+        Reveal ["B_Dogecoin_S_Name_L_"] [Withdraw pA],
+        After 21 (Reveal [] [Withdraw pB])]
+    )]
 
-doSplit = Split [
-  (BCoins 3, [
-    Withdraw pA
-    ]),
-  (BCoins 1, [
-    Withdraw pB
-    ])
-  ]

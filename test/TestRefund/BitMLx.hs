@@ -1,12 +1,12 @@
 
-module TestWithdraw.BitMLx where
+module TestRefund.BitMLx where
 
 import Test.Tasty ( defaultMain, testGroup, TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=) )
 
 import Coins (BCoins(..), DCoins(..))
 import Syntax.Common (P(..))
-import Syntax.BitMLx ( G (StepSecret), (!), (!!), C(Withdraw))
+import Syntax.BitMLx ( G (StepSecret), (!), (!!), C(Refund))
 import Prelude hiding ((!!))
 
 
@@ -22,9 +22,7 @@ preconditions = [
     , pB ! (1, 1) $ ("bd_B", "dd_B")
     , pA !! (0, 0) $ ("bc_A", "dc_A")
     , pB !! (0, 0) $ ("bc_B", "dc_B")
-    , StepSecret pA ("", "") ("A_Bitcoin_S_Name__", "A_Bitcoin_S_Hash__") ("A_Dogecoin_S_Name__", "A_Dogecoin_S_Hash__")
-    , StepSecret pB ("", "") ("B_Bitcoin_S_Name__", "B_Bitcoin_S_Hash__") ("B_Dogecoin_S_Name__", "B_Dogecoin_S_Hash__")
     ]
 
 contract :: C
-contract = Withdraw pA
+contract = Refund

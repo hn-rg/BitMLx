@@ -19,9 +19,9 @@ preconditions = [
     , pB ! (1, 1) $ ("bd_b", "dd_b")
     , pA !! (2, 2) $ ("bc_a", "dc_a")
     , pB !! (2, 2) $ ("bc_b", "dc_b")
-    , StepSecret pA ("", "") ("A_Bitcoin_S_Name", "A_Bitcoin_S_Hash") ("A_Dogecoin_S_Name", "A_Dogecoin_S_Hash")
-    , StepSecret pB ("", "") ("B_Bitcoin_S_Name", "B_Bitcoin_S_Hash") ("B_Dogecoin_S_Name", "B_Dogecoin_S_Hash")
+    , StepSecret pA ("L", "") ("A_Bitcoin_S_Name_L_", "A_Bitcoin_S_Hash_L_") ("A_Dogecoin_S_Name_L_", "A_Dogecoin_S_Hash_L_")
+    , StepSecret pB ("L", "") ("B_Bitcoin_S_Name_L_", "B_Bitcoin_S_Hash_L_") ("B_Dogecoin_S_Name_L_", "B_Dogecoin_S_Hash_L_")
     ]
 
 contract :: C
-contract = Withdraw pA +> NullContract
+contract = WithdrawD pA +> Refund

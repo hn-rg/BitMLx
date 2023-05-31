@@ -1,3 +1,4 @@
+{-# LANGUAGE GADTs #-}
 {-|
 Module      : Syntax.BitMLx
 Description : BitMLx syntax definition.
@@ -43,10 +44,10 @@ data G =
 -- | BitMLx contract
 data C =
     -- | A Priority Choice between contracts D and C.
-    -- 
     PriorityChoice D C
     | TimedPriorityChoice Time D C
-    | NullContract
+    | Withdraw P
+    | Refund
     deriving (Eq, Ord, Show)
 
 -- | Blocking BitMLx contract
@@ -74,7 +75,7 @@ data D =
     | Auth [P] D
     -- | Participant P can withdraw the whole balance of the contract.
     -- The contract ends and each participant is refunded their collateral.
-    | Withdraw P
+    | WithdrawD P
     -- | Splits the contract into many subcontracts.
     -- The numeric Rational are the proportions of the balance each
     -- subcontract takes on each Bitcoin and Dogecoin respectively.
@@ -93,11 +94,11 @@ data D =
 (p !! (bv, dv)) (bx, dx) = Collateral p (bv, dv) (bx, dx)
 
 -- | Shorthand operator for Authorizations.
-infixl 3 ##
-(##) :: [P] -> D -> D
-(##) = Auth 
+infix 3 #:
+(#:) :: [P] -> D -> D
+(#:) = Auth 
 
 -- | Shorthand operator for priority choices.
-infixl 2 +>
+infixr 2 +>
 (+>) :: D -> C -> C
 d +> c = PriorityChoice d c

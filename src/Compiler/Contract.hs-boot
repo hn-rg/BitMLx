@@ -7,4 +7,4 @@ import Compiler.Error (CompilationError)
 import Compiler.Settings ( CompilerSettings )
 
 compileC :: Coins c => CompilerSettings c -> BitMLx.C -> Either CompilationError (BitML.C c) 
-compileD :: Coins c => CompilerSettings c -> BitMLx.D -> Either CompilationError (BitML.D c)
+compileD :: Coins c => CompilerSettings c -> BitMLx.D -> Either CompilationError (BitML.C c)

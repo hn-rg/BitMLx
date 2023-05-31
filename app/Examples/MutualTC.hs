@@ -1,4 +1,4 @@
-module Examples.Split where
+module Examples.MutualTC where
 
 import Prelude hiding ((!!))
 import Syntax.Common ( P(..) )
@@ -6,7 +6,7 @@ import Syntax.BitMLx
 import Data.Ratio ((%))
 
 exampleName :: [Char]
-exampleName = "Split"
+exampleName = "2PMutualTC"
 
 pA = P {pname = "A", pk = "pkA"}
 pB = P {pname = "B", pk = "pkB"}
@@ -16,17 +16,25 @@ participants = [pA, pB]
 
 preconditions :: [G]
 preconditions = [
-    pA ! (2, 2) $ ("bd_a", "dd_a")
-    , pB ! (2, 2) $ ("bd_b", "dd_b")
+    pA ! (1, 1) $ ("bd_a", "dd_a")
+    , pB ! (1, 1) $ ("bd_b", "dd_b")
     , pA !! (0, 0) $ ("bc_a", "dc_a")
     , pB !! (0, 0) $ ("bc_b", "dc_b")
     , StepSecret pA ("L", "") ("A_Bitcoin_S_Name_L_", "A_Bitcoin_S_Hash_L_") ("A_Dogecoin_S_Name_L_", "A_Dogecoin_S_Hash_L_")
     , StepSecret pB ("L", "") ("B_Bitcoin_S_Name_L_", "B_Bitcoin_S_Hash_L_") ("B_Dogecoin_S_Name_L_", "B_Dogecoin_S_Hash_L_")
+    , Secret pA "a" "__SOME_HASH__"
+    , Secret pB "b" "__SOME_HASH__"
     ]
 
 contract :: C
 contract =
-    Split [
-        ((1%2, 1%2), Withdraw pA),
-        ((1%2, 1%2), Withdraw pB)
-    ] +> Refund
+    Reveal ["a", "b"] (
+        Split [
+            ((1%2, 1%2), Withdraw pA),
+            ((1%2, 1%2), Withdraw pB)
+        ]
+        +> Refund
+    ) 
+    +> Reveal ["a"] (Withdraw pA)
+    +> Reveal ["b"] (Withdraw pB)
+    +> Refund

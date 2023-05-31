@@ -8,4 +8,4 @@ import Coins (BCoins, DCoins, Coins)
 import Compiler.Error (CompilationError)
 import Compiler.Settings (CompilerSettings)
 
-compileSplit :: Coins c => CompilerSettings c -> [((Rational, Rational), BitMLx.C)] -> Either CompilationError (BitML.D c)
+compileSplit :: Coins c => CompilerSettings c -> [((Rational, Rational), BitMLx.C)] -> Either CompilationError (BitML.C c)

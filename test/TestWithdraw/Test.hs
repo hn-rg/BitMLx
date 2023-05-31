@@ -7,7 +7,7 @@ import qualified TestWithdraw.BitMLx as BitMLx
 import qualified TestWithdraw.Bitcoin as Bitcoin
 import qualified TestWithdraw.Dogecoin as Dogecoin
 import Compiler.Preconditions (compilePreconditions)
-import Compiler.Contract (compileD)
+import Compiler.Contract (compileC)
 import Compiler.Settings ( bitcoinSettings, dogecoinSettings )
 
 
@@ -23,14 +23,14 @@ testWithdraw = testCaseSteps "Compile a Withdraw contract" $ \step -> do
     let dogecoinSettings' = dogecoinSettings BitMLx.preconditions
 
     step "Compiling to Bitcoin BitML..."
-    let bitcoinResult = compileD bitcoinSettings' BitMLx.contract
+    let bitcoinResult = compileC bitcoinSettings' BitMLx.contract
     compiledBitcoin <- case bitcoinResult of
         Right result -> return result
         Left compilationError -> assertFailure ("Compilation Error: " ++ show compilationError )
     compiledBitcoin @?= Bitcoin.contract
 
     step "Compiling to Dogecoin BitML..."
-    let dogecoinResult = compileD dogecoinSettings' BitMLx.contract
+    let dogecoinResult = compileC dogecoinSettings' BitMLx.contract
     compiledDogecoin <- case dogecoinResult of
         Right result -> return result
         Left compilationError -> assertFailure ("Compilation Error: " ++ show compilationError )

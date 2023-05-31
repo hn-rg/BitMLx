@@ -5,7 +5,7 @@ import Test.Tasty.HUnit ( testCase, (@?=) )
 
 import Coins (DCoins(..))
 import Syntax.Common (P(..))
-import Syntax.BitML ( (!), D(Withdraw, Split, Reveal, After), G (Secret) )
+import Syntax.BitML ( (!), D(Withdraw, Split, Reveal, After), G (Secret), C )
 
 
 participants :: [P]
@@ -21,28 +21,21 @@ preconditions = [
     , pB ! 2 $ "dd_B"
     , pA ! 0 $ "dc_A"
     , pB ! 0 $ "dc_B"
-    , Secret pA "A_Dogecoin_S_Name__0" "A_Dogecoin_S_Hash__0"
-    , Secret pB "B_Dogecoin_S_Name__0" "B_Dogecoin_S_Hash__0"
-    , Secret pA "A_Dogecoin_S_Name__1" "A_Dogecoin_S_Hash__1"
-    , Secret pB "B_Dogecoin_S_Name__1" "B_Dogecoin_S_Hash__1"
+    , Secret pA "A_Dogecoin_S_Name__" "A_Dogecoin_S_Hash__"
+    , Secret pB "B_Dogecoin_S_Name__" "B_Dogecoin_S_Hash__"
     ]
 
-contract :: D DCoins
-contract = Split [
+contract :: C DCoins
+contract = [
+  Reveal ["A_Dogecoin_S_Name__"] [doSplit],
+  Reveal ["B_Dogecoin_S_Name__"] [doSplit] 
+  ]
+
+doSplit = Split [
   (DCoins 1, [
-    Reveal ["A_Dogecoin_S_Name__0"] [Withdraw pA],
-    Reveal ["B_Dogecoin_S_Name__0"] [Withdraw pA],
-    After 11 (Reveal [] [
-      Reveal ["A_Bitcoin_S_Name__0"] [Withdraw pB],
-      Reveal ["B_Bitcoin_S_Name__0"] [Withdraw pA]
-      ])
+    Withdraw pA
     ]),
   (DCoins 3, [
-    Reveal ["A_Dogecoin_S_Name__1"] [Withdraw pB],
-    Reveal ["B_Dogecoin_S_Name__1"] [Withdraw pB],
-    After 11 (Reveal [] [
-      Reveal ["A_Bitcoin_S_Name__1"] [Withdraw pB],
-      Reveal ["B_Bitcoin_S_Name__1"] [Withdraw pA]
-      ])
+    Withdraw pB
     ])
   ]
