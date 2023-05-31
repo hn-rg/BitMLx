@@ -1,16 +1,18 @@
 {-# LANGUAGE RecordWildCards #-}
-module Compiler.PriorityChoice ( compilePriorityChoice )where
+module Compiler.PriorityChoice ( compilePriorityChoice ) where
 
-import Data.Map.Strict (elems, lookup, Map)
-import Prelude hiding (lookup)
+import Data.Map.Strict (Map, elems)
+import Data.List (delete)
 
 import Coins ( Coins, BCoins, DCoins)
+import Syntax.Common ( P (pname), Deposit, Time(..), SName(..), NodeLabel )
+import Syntax.BitML ( D(Reveal, Withdraw, Split, After) )
 import qualified Syntax.BitML as BitML
 import qualified Syntax.BitMLx as BitMLx
-import Syntax.Common ( P (pname), Deposit, Time(..), SName(..), NodeLabel )
 import {-# SOURCE #-} Compiler.Contract (compileC, compileD)
 import Compiler.Error ( CompilationError(..) )
 import Compiler.Settings ( CompilerSettings (..) )
+import Compiler.Auxiliary (eitherLookup, tau, revealAny, sequenceEither)
 
 
 -- | A priority choice between a guarded contract D and a contract C is compiled to a choice between:
@@ -24,61 +26,28 @@ compilePriorityChoice :: Coins c => CompilerSettings c -> BitMLx.D -> BitMLx.C -
 compilePriorityChoice settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel), ..} d c overrideTimeout = do
         d' <- compileD settings{currentLabel = (choiceLabel ++ "L", splitLabel), currentTime = currentTime + elapseTime} d
         c' <- compileC settings{currentLabel = (choiceLabel ++ "R", splitLabel), currentTime = currentTime + 2 * elapseTime} c
-        thisChainStepSecrets <- eitherLookup (choiceLabel, splitLabel) thisChainStepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
-        otherChainStepSecrets <- eitherLookup (choiceLabel, splitLabel) otherChainStepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
-        punish <- punishAnyone participants balance otherChainStepSecrets
+        punish <- punishAnyone settings
         let t = currentTime + elapseTime
             t' = currentTime + 2 * elapseTime
-            skip = tau (punish ++ [BitML.After t' (tau c') | c' /= []])
-        Right (revealAny (elems thisChainStepSecrets) [d'] ++ [BitML.After t skip])
+            skip = tau (punish ++ [After t' (tau c')])
+        Right (d' ++ [After t skip])
 
--- | Small cheat to convert a guarded contract into a contract.
--- Notice that the price of using tau is that it introduces an
--- extra transaction, with it's associated transaction fees.
-tau :: BitML.C c -> BitML.D c
-tau = BitML.Reveal []
+-- | Builds the sum contract where we punish any participant here for revealing
+-- their step secret on the other blockchain.
+punishAnyone :: Coins c => CompilerSettings c -> Either CompilationError (BitML.C c)
+punishAnyone settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel), ..} = do
+    otherChainStepSecrets <- eitherLookup (choiceLabel ++ "L", splitLabel) otherChainStepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
+    sequenceEither [ punish p participants balance otherChainStepSecrets | p <- participants]
 
--- | Auxiliary function to convert a lookup from Maybe to Either
--- takes as argument the error to throw if the lookup
--- returns nothing.
-eitherLookup :: Ord k => k -> Map k v -> e -> Either e v
-eitherLookup k m e = case lookup k m of
-    Just v -> Right v
-    Nothing -> Left e
-
--- | Auxiliary function to either get all right results or
--- short-circuit on the first error.
-sequenceEither :: [Either e a] -> Either e [a]
-sequenceEither [] = Right []
-sequenceEither (Left e : _) = Left e
-sequenceEither (Right x : xs) =
-    case sequenceEither xs of
-        Left e -> Left e
-        Right ys -> Right (x : ys)
-
--- | An alternative reveal construction that work by requiring any of a list of secrets
--- to be revealed instead of all of them.
-revealAny :: Coins c =>  [SName] -> BitML.C c -> BitML.C c
-revealAny secrets continuation = map (\s -> BitML.Reveal [s] continuation) secrets
-
--- | Punish a participant by splitting it's collateral among all others.
-punishOne :: Coins c => P -> [P] -> c -> Map P SName -> Either CompilationError (BitML.D c)
-punishOne punishedParticipant honestParticipants balance stepSecrets = do
-    secret <- eitherLookup punishedParticipant stepSecrets (StepSecretsNotFoundForParticipant punishedParticipant)
-    let executePunishment = if length honestParticipants > 1
-        then
-            BitML.Split (map (\p -> (balance, [BitML.Withdraw p])) honestParticipants)
-        else
-            -- Optimization: Avoid having a single branch split.
-            BitML.Withdraw (head honestParticipants)
-    Right (BitML.Reveal [secret] [executePunishment])
-
--- | Given a list tuples (p, c, s) where p is the participant, c  is the value of their collateral
--- and s is one of their secrets, creates a contract that punishes any participant for
--- revealing their secret, by splitting their collateral among the rest.
-punishAnyone :: Coins c => [P] -> c -> Map P SName -> Either CompilationError (BitML.C c)
-punishAnyone participants balance stepSecrets =
-    sequenceEither [
-        punishOne p (filter (/= p) participants) balance stepSecrets
-        | p <- participants
-    ]
+-- | Punish a participant that reveals their step secret on the other blockchain
+-- by splitting it's collateral among all other participants on this blockchain.
+-- Because of how we define the collaterals ((n-2) * balance), the total funds are just enough for
+-- each honest participant to withdraw an amount equal to the contract balance.
+punish :: Coins c => P -> [P] -> c -> Map P SName -> Either CompilationError (BitML.D c)
+punish p allParticipants balance stepSecrets = do
+    secret <- eitherLookup p stepSecrets (StepSecretsNotFoundForParticipant p)
+    let honestParticipants = delete p allParticipants
+        executePunishment = case honestParticipants of
+            [h] -> Withdraw h
+            hs -> Split [(balance, [Withdraw h]) | h <- hs]
+    Right $ Reveal [secret] [executePunishment]

@@ -1,4 +1,4 @@
-module TestWithdraw.Bitcoin where
+module TestRefund.Bitcoin where
 
 import Test.Tasty ( defaultMain, testGroup, TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=) )
@@ -21,9 +21,10 @@ preconditions = [
     , pB ! 1 $ "bd_B"
     , pA ! 0 $ "bc_A"
     , pB ! 0 $ "bc_B"
-    , Secret pA "A_Bitcoin_S_Name__" "A_Bitcoin_S_Hash__"
-    , Secret pB "B_Bitcoin_S_Name__" "B_Bitcoin_S_Hash__"
     ]
 
 contract :: C BCoins
-contract = [Withdraw pA]
+contract = [Split [
+    (1, [Withdraw pA]),
+    (1, [Withdraw pB])
+    ]]

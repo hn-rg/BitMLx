@@ -8,7 +8,7 @@ import Data.Text.Lazy.IO as TL ( writeFile )
 import Compiler ( compile )
 import Pretty ( prettyprintNL )
 
-import Examples.Split
+import Examples.Escrow
     ( exampleName, participants, preconditions, contract )
 
 main :: IO ()

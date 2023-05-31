@@ -23,4 +23,6 @@ data CompilationError =
     | StepSecretsNotFoundForParticipant P
     -- | Not implemented yet.
     | NotImplemented
+    -- | This Participant has no deposit
+    | NoDeposit P
     deriving (Show, Eq)

@@ -5,7 +5,7 @@ version:             0.1.0.0
 homepage:            https://github.com/linen101/bitmlx#readme
 license:             BSD3
 license-file:        LICENSE
-author:              Chrysa Oikonomou
+author:              Federico Badaloni, Chrysa Oikonomou
 maintainer:          linen@protonmail.com
 copyright:           2021, Some rights reserved
 category:            Web
@@ -17,18 +17,20 @@ library
   hs-source-dirs:      src
   exposed-modules:
     Coins
-    Syntax.BitMLx
     Syntax.BitML
+    Syntax.BitMLx
     Syntax.Common
     Compiler
-    Pretty
-    Compiler.Error
-    Compiler.Settings
+    Compiler.Auxiliary
     Compiler.Contract
-    Compiler.Withdraw
+    Compiler.Error
     Compiler.Preconditions
     Compiler.PriorityChoice
+    Compiler.Refund
+    Compiler.Settings
     Compiler.Split
+    Compiler.Withdraw
+    Pretty
   build-depends: 
     prettyprinter,
     vector,      
@@ -43,6 +45,10 @@ executable bitmlx-exe
   other-modules:
     Examples.PriorityChoice
     Examples.Split
+    Examples.SimpleExchange
+    Examples.Escrow
+    Examples.MutualTC
+    Examples.NaiveExchangeLottery
   build-depends:
       base >=4.7 && <5
     , bitmlx
@@ -65,5 +71,17 @@ test-suite bitmlx-test
     TestSplit.Bitcoin
     TestSplit.Dogecoin
     TestSplit.Test
+    TestPriorityChoice.BitMLx
+    TestPriorityChoice.Bitcoin
+    TestPriorityChoice.Dogecoin
+    TestPriorityChoice.Test
+    TestWithdrawD.BitMLx
+    TestWithdrawD.Bitcoin
+    TestWithdrawD.Dogecoin
+    TestWithdrawD.Test
+    TestRefund.BitMLx
+    TestRefund.Bitcoin
+    TestRefund.Dogecoin
+    TestRefund.Test
   build-depends:      base >= 4.7 && < 5, tasty, tasty-hunit, tasty-quickcheck, bitmlx
   default-language:   Haskell2010

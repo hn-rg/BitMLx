@@ -1,4 +1,4 @@
-module TestWithdraw.Dogecoin where
+module TestWithdrawD.Dogecoin where
 
 import Test.Tasty ( defaultMain, testGroup, TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=) )
@@ -20,9 +20,12 @@ preconditions = [
     , pB ! 1 $ "dd_B"
     , pA ! 0 $ "dc_A"
     , pB ! 0 $ "dc_B"
-    , Secret pA "A_Dogecoin_S_Name__" "A_Dogecoin_S_Hash__"
-    , Secret pB "B_Dogecoin_S_Name__" "B_Dogecoin_S_Hash__"
+    , Secret (P {pname = "A", pk = "pkA"}) "A_Dogecoin_S_Name__" "A_Dogecoin_S_Hash__"
+    , Secret (P {pname = "B", pk = "pkB"}) "B_Dogecoin_S_Name__" "B_Dogecoin_S_Hash__"
     ]
 
 contract :: C DCoins
-contract = [Withdraw pA]
+contract = [
+    Reveal ["A_Dogecoin_S_Name__"] [Withdraw pA],
+    Reveal ["B_Dogecoin_S_Name__"] [Withdraw pA]
+    ]

@@ -1,18 +1,18 @@
-module TestSplit.Test where
+module TestWithdrawD.Test where
 
 import Test.Tasty ( defaultMain, testGroup, TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=), testCaseSteps, assertFailure )
 
-import qualified TestSplit.BitMLx as BitMLx
-import qualified TestSplit.Bitcoin as Bitcoin
-import qualified TestSplit.Dogecoin as Dogecoin
+import qualified TestWithdrawD.BitMLx as BitMLx
+import qualified TestWithdrawD.Bitcoin as Bitcoin
+import qualified TestWithdrawD.Dogecoin as Dogecoin
 import Compiler.Preconditions (compilePreconditions)
 import Compiler.Contract (compileD)
 import Compiler.Settings ( bitcoinSettings, dogecoinSettings )
 
 
-testSplit :: TestTree
-testSplit = testCaseSteps "Compile a Split guarded contract" $ \step -> do
+testWithdrawD :: TestTree
+testWithdrawD = testCaseSteps "Compile a Withdraw guarded contract" $ \step -> do
     step "Compiling preconditions..."
     let (bitcoinResult, dogecoinResult) = compilePreconditions BitMLx.preconditions
     bitcoinResult @?= Bitcoin.preconditions

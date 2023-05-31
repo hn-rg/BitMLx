@@ -1,7 +1,7 @@
 {-# LANGUAGE RankNTypes #-}
 module Compiler.Settings (CompilerSettings(..), bitcoinSettings, dogecoinSettings) where
 
-import Data.Map.Strict (Map, fromList, empty)
+import Data.Map.Strict (Map, fromList, empty, insert)
 
 import Coins (BCoins (BCoins), DCoins (DCoins), Coins)
 import Syntax.Common (Time, SName, P, NodeLabel)
@@ -29,6 +29,8 @@ data CompilerSettings c = CompilerSettings {
     -- | Step secrets used in the other blockchain (the one we are keeping sync with)
     -- when compiling a priority choice.
     , otherChainStepSecretsByLabel :: Map NodeLabel (Map P SName)
+    -- | What proportion of the balance each participant takes in a refund.
+    , refundProportionsMap :: Map P Rational
     -- | A security parameter that establishes how much exclusivity time we
     -- give to fases of the stipulation protocol and to actions before skipping them.
     , elapseTime :: Time
@@ -53,12 +55,12 @@ bitcoinSettings preconditions = CompilerSettings {
     , totalFunds = totalFundsFromPreconditions coinChooser preconditions
     , thisChainStepSecretsByLabel = bitcoinStepSecretsFromPreconditions preconditions
     , otherChainStepSecretsByLabel = dogecoinStepSecretsFromPreconditions preconditions
+    , refundProportionsMap = refundProportionsMapFromPrecoindition coinChooser preconditions
     , currentTime = 1
     , elapseTime = 10
     , currentLabel = ("", "")
     , coinChooser = coinChooser
 } where coinChooser = fst
-
 dogecoinSettings :: [BitMLx.G] -> CompilerSettings DCoins
 dogecoinSettings preconditions = CompilerSettings {
     participants = participantsFromPreconditions preconditions
@@ -67,10 +69,11 @@ dogecoinSettings preconditions = CompilerSettings {
     , totalFunds = totalFundsFromPreconditions coinChooser preconditions
     , thisChainStepSecretsByLabel = dogecoinStepSecretsFromPreconditions preconditions
     , otherChainStepSecretsByLabel = bitcoinStepSecretsFromPreconditions preconditions
+    , refundProportionsMap = refundProportionsMapFromPrecoindition coinChooser preconditions
     , currentTime = 1
     , elapseTime = 10
     , currentLabel = ("", "")
-    , coinChooser = snd
+    , coinChooser = coinChooser
 } where coinChooser = snd
 
 -- | Extract a list of the contract's participants given it's preconditions.
@@ -104,6 +107,21 @@ totalFundsFromPreconditions coinChooser preconditions = balance + fromInteger (t
         n = length (participantsFromPreconditions preconditions)
         balance = balanceFromPreconditions coinChooser preconditions
         collateral = collateralFromPreconditions coinChooser preconditions
+
+-- | What proportion of the balance each participant takes in a refund.
+refundProportionsMapFromPrecoindition :: Coins a => ((BCoins, DCoins) -> a) -> [BitMLx.G] -> Map P Rational
+refundProportionsMapFromPrecoindition coinChooser preconditions = foldr buildProportionsMap empty preconditions
+    where
+        participants = participantsFromPreconditions preconditions
+        balance = balanceFromPreconditions coinChooser preconditions
+        buildProportionsMap :: BitMLx.G -> Map P Rational -> Map P Rational 
+        buildProportionsMap precondition proportions = case precondition of
+            BitMLx.Deposit participant coins _name -> let
+                -- We need ugly conversions because `balance` is an abstract coin,
+                -- while `coins` is either `BCoins` or `DCoins`.
+                proportion =  fromInteger (toInteger (coinChooser coins)) / fromInteger (toInteger balance)
+                in insert participant proportion proportions
+            _notDeposit -> proportions
 
 -- | Map step secrets by label and participant so that we can easily query for them later.
 bitcoinStepSecretsFromPreconditions :: [BitMLx.G] -> Map NodeLabel (Map P SName)
