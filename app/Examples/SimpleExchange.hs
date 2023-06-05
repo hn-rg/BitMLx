@@ -3,13 +3,6 @@ module Examples.SimpleExchange where
 import Prelude hiding ((!!))
 import Syntax.Common ( P(..), Pred (PEq, PAnd, PBtwn, PNeq), E (ELength, EInt) )
 import Syntax.BitMLx
-    ( (!),
-      (!!),
-      (#:),
-      (+>),
-      C(Withdraw, Refund),
-      D(WithdrawD, Split),
-      G(StepSecret) )
 import Data.Ratio ((%))
 
 exampleName :: [Char]
@@ -34,8 +27,11 @@ preconditions = [
 
 contract :: C
 contract =
-    Split [
-        ((0, 1), Withdraw pA),
-        ((1, 0), Withdraw pB)
-        ]
-    +> Refund
+    WithdrawD [
+        (pA, (0, 1)),
+        (pB, (1, 0))
+    ]
+    +> Withdraw [
+        (pA, (1, 0)),
+        (pB, (0, 1))
+    ]

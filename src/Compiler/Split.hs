@@ -9,7 +9,7 @@ import {-# SOURCE #-} Compiler.Contract (compileC)
 import Coins (BCoins, DCoins, Coins)
 import Compiler.Error (CompilationError(..))
 import Compiler.Settings (CompilerSettings (..))
-import Compiler.Auxiliary (eitherLookup, revealAny, sequenceEither, scaleCoins)
+import Compiler.Auxiliary (eitherLookup, revealAny, listEither, scaleCoins)
 import Syntax.BitML (D(Split))
 import Data.Map (elems)
 
@@ -33,7 +33,7 @@ compileSplit settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel),
     if sum coinProportions /= 1 || any (\p -> p < 0 || p > 1) coinProportions
         then Left (InconsistentSplit  coinProportions)
         else Right ()
-    compiledSubcontracts <- sequenceEither (
+    compiledSubcontracts <- listEither (
         map compileSubcontract (enumerate subcontractsWithProportions)
         )
     Right $ revealAny (elems thisChainStepSecrets) [Split compiledSubcontracts]
@@ -46,8 +46,8 @@ compileSplit settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel),
         compileSubcontract (index, (proportions, subcontract)) = do
             let coinProportion = coinChooser proportions
                 newLabel = (choiceLabel, splitLabel ++ show index)
-            newBalance <- scaleCoins balance coinProportion
-            newCollateral <- scaleCoins collateral coinProportion
-            newTotalFunds <- scaleCoins totalFunds coinProportion
+            newBalance <- balance `scaleCoins` coinProportion
+            newCollateral <- collateral `scaleCoins` coinProportion
+            newTotalFunds <- totalFunds `scaleCoins` coinProportion
             compiledSubcontract <- compileC settings{balance=newBalance, collateral=newCollateral, totalFunds=newTotalFunds, currentLabel=newLabel} subcontract
             Right (newTotalFunds, compiledSubcontract)

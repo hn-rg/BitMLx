@@ -31,18 +31,24 @@ eitherLookup k m e = case lookup k m of
 
 -- | Auxiliary function to either get all right results or
 -- short-circuit on the first error.
-sequenceEither :: [Either e a] -> Either e [a]
-sequenceEither [] = Right []
-sequenceEither (Left e : _) = Left e
-sequenceEither (Right x : xs) =
-    case sequenceEither xs of
+listEither :: [Either e a] -> Either e [a]
+listEither [] = Right []
+listEither (Left e : _) = Left e
+listEither (Right x : xs) =
+    case listEither xs of
         Left e -> Left e
         Right ys -> Right (x : ys)
+
+tupleEither :: (Either e a, b) -> Either e (a, b)
+tupleEither (Left err, y) = Left err
+tupleEither (Right x, y) = Right (x, y)
 
 -- Auxiliary function to split funds by some ratio.
 -- Fails if the result would be a non-whole number.
 scaleCoins :: Coins c => c -> Rational -> Either CompilationError c
-scaleCoins coins r
-    | (c * numerator r) `mod` denominator r == 0 = Right (fromInteger (c * numerator r `div` denominator r))
-    | otherwise = Left $ NonDividableCoins c r
-    where c = toInteger coins
+scaleCoins wrappedCoin r
+    | (coins * n) `mod` d == 0 = Right $ fromInteger $ coins * n `div` d
+    | otherwise = Left $ NonDividableCoins coins r
+    where coins = toInteger wrappedCoin
+          n = numerator r
+          d = denominator r

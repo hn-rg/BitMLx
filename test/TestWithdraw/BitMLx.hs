@@ -8,6 +8,7 @@ import Coins (BCoins(..), DCoins(..))
 import Syntax.Common (P(..))
 import Syntax.BitMLx ( G (StepSecret), (!), (!!), C(Withdraw))
 import Prelude hiding ((!!))
+import Data.Ratio ((%))
 
 
 participants :: [P]
@@ -27,4 +28,7 @@ preconditions = [
     ]
 
 contract :: C
-contract = Withdraw pA
+contract = Withdraw [
+    (pA, (1, 1%2)),
+    (pB, (0, 1%2))
+    ]

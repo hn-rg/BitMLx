@@ -1,18 +1,18 @@
-module TestRefund.Test where
+module TestManyParticipantsWithdraw.Test where
 
 import Test.Tasty ( defaultMain, testGroup, TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=), testCaseSteps, assertFailure )
 
-import qualified TestRefund.BitMLx as BitMLx
-import qualified TestRefund.Bitcoin as Bitcoin
-import qualified TestRefund.Dogecoin as Dogecoin
+import qualified TestManyParticipantsWithdraw.BitMLx as BitMLx
+import qualified TestManyParticipantsWithdraw.Bitcoin as Bitcoin
+import qualified TestManyParticipantsWithdraw.Dogecoin as Dogecoin
 import Compiler.Preconditions (compilePreconditions)
 import Compiler.Contract (compileC)
 import Compiler.Settings ( bitcoinSettings, dogecoinSettings )
 
 
-testRefund :: TestTree
-testRefund = testCaseSteps "Compile a Refund contract" $ \step -> do
+testManyParticipantsWithdraw :: TestTree
+testManyParticipantsWithdraw = testCaseSteps "Compile a Withdraw with many parcipants" $ \step -> do
     step "Compiling preconditions..."
     let (bitcoinResult, dogecoinResult) = compilePreconditions BitMLx.preconditions
     bitcoinResult @?= Bitcoin.preconditions

@@ -26,7 +26,6 @@ library
     Compiler.Error
     Compiler.Preconditions
     Compiler.PriorityChoice
-    Compiler.Refund
     Compiler.Settings
     Compiler.Split
     Compiler.Withdraw
@@ -43,8 +42,6 @@ executable bitmlx-exe
   main-is:             Main.hs
   hs-source-dirs:      app
   other-modules:
-    Examples.PriorityChoice
-    Examples.Split
     Examples.SimpleExchange
     Examples.Escrow
     Examples.MutualTC
@@ -79,9 +76,13 @@ test-suite bitmlx-test
     TestWithdrawD.Bitcoin
     TestWithdrawD.Dogecoin
     TestWithdrawD.Test
-    TestRefund.BitMLx
-    TestRefund.Bitcoin
-    TestRefund.Dogecoin
-    TestRefund.Test
+    TestManyParticipantsWithdraw.BitMLx
+    TestManyParticipantsWithdraw.Bitcoin
+    TestManyParticipantsWithdraw.Dogecoin
+    TestManyParticipantsWithdraw.Test
+    TestManyParticipantsPriorityChoice.BitMLx
+    TestManyParticipantsPriorityChoice.Bitcoin
+    TestManyParticipantsPriorityChoice.Dogecoin
+    TestManyParticipantsPriorityChoice.Test
   build-depends:      base >= 4.7 && < 5, tasty, tasty-hunit, tasty-quickcheck, bitmlx
   default-language:   Haskell2010

@@ -33,15 +33,15 @@ preconditions = [
 
 contract :: C
 contract =
-    [pA] #: WithdrawD pB
-    +> [pB] #: WithdrawD pA
+    [pA] #: withdrawAllD pB
+    +> [pB] #: withdrawAllD pA
     +> [pA] #: resolve 0.1 0.9
     +> [pB] #: resolve 0.1 0.9
-    +> Refund
+    +> withdrawAll pB
 
 resolve :: Rational -> Rational -> D
 resolve v v' =
     Split [
-        ((v, v), Withdraw pM),
-        ((v', v'), [pM] #: WithdrawD pA +> Withdraw pB) 
+        ((v, v), withdrawAll pM),
+        ((v', v'), ([pM] #: withdrawAllD pA) +> withdrawAll pB) 
     ]

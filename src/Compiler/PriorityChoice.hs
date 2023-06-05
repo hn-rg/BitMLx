@@ -12,7 +12,7 @@ import qualified Syntax.BitMLx as BitMLx
 import {-# SOURCE #-} Compiler.Contract (compileC, compileD)
 import Compiler.Error ( CompilationError(..) )
 import Compiler.Settings ( CompilerSettings (..) )
-import Compiler.Auxiliary (eitherLookup, tau, revealAny, sequenceEither)
+import Compiler.Auxiliary (eitherLookup, tau, revealAny, listEither)
 
 
 -- | A priority choice between a guarded contract D and a contract C is compiled to a choice between:
@@ -37,17 +37,17 @@ compilePriorityChoice settings@CompilerSettings{currentLabel = (choiceLabel, spl
 punishAnyone :: Coins c => CompilerSettings c -> Either CompilationError (BitML.C c)
 punishAnyone settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel), ..} = do
     otherChainStepSecrets <- eitherLookup (choiceLabel ++ "L", splitLabel) otherChainStepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
-    sequenceEither [ punish p participants balance otherChainStepSecrets | p <- participants]
+    listEither [ punish p participants balance collateral otherChainStepSecrets | p <- participants]
 
 -- | Punish a participant that reveals their step secret on the other blockchain
 -- by splitting it's collateral among all other participants on this blockchain.
 -- Because of how we define the collaterals ((n-2) * balance), the total funds are just enough for
--- each honest participant to withdraw an amount equal to the contract balance.
-punish :: Coins c => P -> [P] -> c -> Map P SName -> Either CompilationError (BitML.D c)
-punish p allParticipants balance stepSecrets = do
+-- each honest participant to withdraw an amount equal to the contract balance + their own collateral.
+punish :: Coins c => P -> [P] -> c -> c -> Map P SName -> Either CompilationError (BitML.D c)
+punish p allParticipants balance collateral stepSecrets = do
     secret <- eitherLookup p stepSecrets (StepSecretsNotFoundForParticipant p)
     let honestParticipants = delete p allParticipants
         executePunishment = case honestParticipants of
             [h] -> Withdraw h
-            hs -> Split [(balance, [Withdraw h]) | h <- hs]
+            hs -> Split [(balance + collateral, [Withdraw h]) | h <- hs]
     Right $ Reveal [secret] [executePunishment]

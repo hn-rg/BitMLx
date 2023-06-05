@@ -5,7 +5,8 @@ import TestWithdraw.Test (testWithdraw)
 import TestSplit.Test (testSplit)
 import TestPriorityChoice.Test (testPriorityChoice)
 import TestWithdrawD.Test (testWithdrawD)
-import TestRefund.Test (testRefund)
+import TestManyParticipantsWithdraw.Test (testManyParticipantsWithdraw)
+import TestManyParticipantsPriorityChoice.Test (testManyParticipantsPriorityChoice)
 
 main :: IO ()
 main = defaultMain tests
@@ -16,5 +17,6 @@ tests = testGroup "All tests"
   , testSplit
   , testPriorityChoice
   , testWithdraw
-  , testRefund
+  , testManyParticipantsWithdraw
+  , testManyParticipantsPriorityChoice
   ]

@@ -1,13 +1,15 @@
 
 module TestWithdrawD.BitMLx where
+    
+import Prelude hiding ((!!))
+import Data.Ratio ((%))
 
 import Test.Tasty ( defaultMain, testGroup, TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=) )
 
 import Coins (BCoins(..), DCoins(..))
 import Syntax.Common (P(..))
-import Syntax.BitMLx ( G (StepSecret), (!), (!!), D(WithdrawD))
-import Prelude hiding ((!!))
+import Syntax.BitMLx ( G (StepSecret), (!), (!!), D(WithdrawD), withdrawAllD)
 
 
 participants :: [P]
@@ -27,4 +29,7 @@ preconditions = [
     ]
 
 contract :: D
-contract = WithdrawD pA
+contract = WithdrawD [
+    (pA, (1, 1%2)),
+    (pB, (0, 1%2))
+    ]
