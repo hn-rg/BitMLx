@@ -42,47 +42,50 @@ data G =
     deriving (Eq,Show)
 
 -- | BitMLx contract
-data C =
+data C where
     -- | A Priority Choice between contracts D and C.
-    PriorityChoice D C
-    | TimedPriorityChoice Time D C
-    | Withdraw P
-    | Refund
+    PriorityChoice :: D -> C -> C
+    -- | A Priority Choice with an added time offset.
+    TimedPriorityChoice :: Time -> D -> C -> C
+    -- | End the current contract, distributing the funds among participants 
+    -- following the given proportionals.
+    -- 
+    -- The proportions should be numbers between 0 and 1, and
+    -- they should add up to 1 on each blockchain. 
+    Withdraw :: [(P, (Rational, Rational))] -> C
     deriving (Eq, Ord, Show)
+-- data C =
+--     PriorityChoice D C
+--     -- | A Priority Choice with an added time offset.
+--     | TimedPriorityChoice Time D C
+--     -- | End the current contract, distributing the funds among participants 
+--     -- following the given proportionals.
+--     -- 
+--     -- The proportions should be numbers between 0 and 1, and
+--     -- they should add up to 1 on each blockchain. 
+--     | Withdraw [(P, (Rational, Rational))]
+--     deriving (Eq, Ord, Show)
 
 -- | Blocking BitMLx contract
-data D =
-    -- | Add some (pre-signed) volatile deposits to the contract balance and then execute C.
-    -- This action is atomic: either all deposits are spent or none are.
-    Put [(Deposit, Deposit)] C
+data D where
     -- | Reveal all secrets on a list as a condition to execute C.
-    | Reveal [SName] C
-    -- | Combines Put and Reveal into a single atomic action. C will only execute if both:
-    -- All deposits are spent in favor of the contract.
-    -- All secrets are revealed and match the hashes in the preconditions.
-    | PutReveal [(Deposit, Deposit)] [SName] C
+    Reveal :: [SName] -> C -> D
     -- | Reveal secrets and evaluate a logical predicate over the values. C will only be executed if both:
     -- All secrets are revealed and match the hashes in the preconditions.
     -- The predicate evaluates to True when instanciated with the values revealed.
-    | RevealIf [SName] Pred C
-    -- | Combines Put and RevealIf in a single atomic action. C will only be executed if all of the following are true:
-    -- All deposits are spent in favor of the contract.
-    -- All secrets are revealed and match the hashes in the preconditions.
-    -- The predicate evaluates to True when instanciated with the values revealed.
-    | PutRevealIf [(Deposit, Deposit)] [SName] Pred C
+    RevealIf :: [SName] -> Pred -> C -> D
     -- | A list of participants are required to authorize the execution of contract D
     -- with a digital signature.
-    | Auth [P] D
-    -- | Participant P can withdraw the whole balance of the contract.
-    -- The contract ends and each participant is refunded their collateral.
-    | WithdrawD P
+    Auth :: [P] -> D -> D
     -- | Splits the contract into many subcontracts.
     -- The numeric Rational are the proportions of the balance each
     -- subcontract takes on each Bitcoin and Dogecoin respectively.
     --
     -- The proportions should be numbers between 0 and 1, and
     -- they should add up to 1 on each blockchain. 
-    | Split [((Rational, Rational), C)]
+    Split :: [((Rational, Rational), C)] -> D 
+    -- | Idem to `Withdraw` but as a guarded contract.
+    WithdrawD :: [(P, (Rational, Rational))] -> D
     deriving (Eq, Ord, Show)
 
 -- | Shorthand operator for deposits.
@@ -102,3 +105,21 @@ infix 3 #:
 infixr 2 +>
 (+>) :: D -> C -> C
 d +> c = PriorityChoice d c
+
+-- | Short-hand unary operator for the particular case where a single participant
+-- withdraws the whole balance. Ideally we would use some syntactic
+-- sugar/overloading/notation abuse to just write this as `Withdraw A`
+-- but that would give us typing problems here.
+withdrawAll :: P -> C
+withdrawAll p = Withdraw [(p, (1, 1))]
+
+-- | Guarded contract version of `withdrawAll
+withdrawAllD :: P -> D
+withdrawAllD p = WithdrawD [(p, (1, 1))]
+
+($@) :: () -> P -> C
+() $@ p = Withdraw [(p, (1, 1))]
+
+($$@) :: () -> P -> D
+() $$@ p = WithdrawD [(p, (1, 1))]
+

@@ -29,12 +29,11 @@ preconditions = [
 contract :: C
 contract =
     Reveal ["a", "b"] (
-        Split [
-            ((1%2, 1%2), Withdraw pA),
-            ((1%2, 1%2), Withdraw pB)
+        Withdraw [
+            (pA, (1%2, 1%2)),
+            (pB, (1%2, 1%2))
         ]
-        +> Refund
     ) 
-    +> Reveal ["a"] (Withdraw pA)
-    +> Reveal ["b"] (Withdraw pB)
-    +> Refund
+    +> Reveal ["a"] (withdrawAll pA)
+    +> Reveal ["b"] (withdrawAll pB)
+    +> withdrawAll pA

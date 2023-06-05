@@ -32,14 +32,14 @@ contract =
         (PAnd
             (PBtwn (ELength "b") (EInt 0) (EInt 1))
             (PEq (ELength "a") (ELength "b")))
-        (Withdraw pA) 
+        (withdrawAll pA) 
     +> RevealIf ["a", "b"]
         (PAnd
             (PBtwn (ELength "b") (EInt 0) (EInt 1))
             (PNeq (ELength "a") (ELength "b")))
-        (Withdraw pB) 
+        (withdrawAll pB) 
     +> RevealIf ["a", "b"]
         (PBtwn (ELength "b")
             (EInt 0) (EInt 1))
-        (Withdraw pB) 
-    +> Withdraw pA
+        (withdrawAll pB) 
+    +> withdrawAll pA

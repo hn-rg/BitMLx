@@ -26,6 +26,15 @@ preconditions = [
 
 contract :: C DCoins
 contract = [
-    Reveal ["A_Dogecoin_S_Name__"] [Withdraw pA],
-    Reveal ["B_Dogecoin_S_Name__"] [Withdraw pA]
+    Reveal ["A_Dogecoin_S_Name__"] [
+        Split [
+            (DCoins 1, [Withdraw pA]),
+            (DCoins 1, [Withdraw pB])
+        ]
+    ],
+    Reveal ["B_Dogecoin_S_Name__"] [
+        Split [
+            (DCoins 1, [Withdraw pA]),
+            (DCoins 1,[Withdraw pB])
+        ]]
     ]
