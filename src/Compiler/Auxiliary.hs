@@ -5,21 +5,22 @@ import Data.Map.Strict (elems, lookup, Map)
 import Data.Ratio (numerator, denominator)
 
 import Coins (Coins)
-import Syntax.Common (SName)
-import Syntax.BitML (D (Reveal), C)
+import Syntax.Common (SName, P)
+import qualified Syntax.BitML as BitML
+import qualified Syntax.BitMLx as BitMLx
 import Compiler.Error (CompilationError (NonDividableCoins))
 
 
 -- | Small cheat to convert a guarded contract into a contract.
 -- Notice that the price of using tau is that it introduces an
 -- extra transaction, with it's associated transaction fees.
-tau ::C c -> D c
-tau = Reveal []
+tau :: BitML.C c -> BitML.D c
+tau = BitML.Reveal []
 
 -- | An alternative reveal construction that works by requiring any of a list of secrets
 -- to be revealed instead of all of them.
-revealAny :: Coins c =>  [SName] -> C c -> C c
-revealAny secrets subcontract =  [Reveal [s] subcontract | s <- secrets]
+revealAny :: Coins c =>  [SName] -> BitML.C c -> BitML.C c
+revealAny secrets subcontract =  [BitML.Reveal [s] subcontract | s <- secrets]
 
 -- | Auxiliary function to convert a lookup from Maybe to Either
 -- takes as argument the error to throw if the lookup
@@ -52,3 +53,7 @@ scaleCoins wrappedCoin r
     where coins = toInteger wrappedCoin
           n = numerator r
           d = denominator r
+
+-- | Creates a list with the elements of the original list enumerated in tuples.
+enumerate :: [b] -> [(Integer, b)]
+enumerate = zip [0..]

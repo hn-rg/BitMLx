@@ -1,6 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 module Compiler.Split ( compileSplit ) where
 
+import Data.Map (elems)
 import Data.Ratio (numerator, denominator)
 
 import qualified Syntax.BitML as BitML
@@ -9,12 +10,9 @@ import {-# SOURCE #-} Compiler.Contract (compileC)
 import Coins (BCoins, DCoins, Coins)
 import Compiler.Error (CompilationError(..))
 import Compiler.Settings (CompilerSettings (..))
-import Compiler.Auxiliary (eitherLookup, revealAny, listEither, scaleCoins)
+import Compiler.Auxiliary (eitherLookup, revealAny, listEither, scaleCoins, enumerate)
 import Syntax.BitML (D(Split))
-import Data.Map (elems)
 
-enumerate :: [b] -> [(Integer, b)]
-enumerate = zip [0..]
 
 -- | A Split statement in BitMLx is also compiled to a split in BitML between the
 -- compiled subcontracts.
@@ -28,7 +26,7 @@ enumerate = zip [0..]
 -- are on the 0-1 range and add up to 1.
 compileSplit :: Coins c => CompilerSettings c -> [((Rational, Rational), BitMLx.C)] -> Either CompilationError (BitML.C c)
 compileSplit settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel), ..} subcontractsWithProportions = do
-    thisChainStepSecrets <- eitherLookup (choiceLabel, splitLabel) thisChainStepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
+    thisChainStepSecrets <- eitherLookup (choiceLabel, splitLabel) stepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
     let coinProportions = map getProportionOnThisCoin subcontractsWithProportions
     if sum coinProportions /= 1 || any (\p -> p < 0 || p > 1) coinProportions
         then Left (InconsistentSplit  coinProportions)

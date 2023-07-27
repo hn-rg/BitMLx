@@ -1,6 +1,5 @@
 module Examples.SimpleExchange where
 
-import Prelude hiding ((!!))
 import Syntax.Common ( P(..), Pred (PEq, PAnd, PBtwn, PNeq), E (ELength, EInt) )
 import Syntax.BitMLx
 import Data.Ratio ((%))
@@ -16,12 +15,8 @@ participants = [pA, pB]
 
 preconditions :: [G]
 preconditions = [
-    pA ! (1, 0) $ ("bd_a", "dd_a")
-    , pB ! (0, 1) $ ("bd_b", "dd_b")
-    , pA !! (0, 0) $ ("bc_a", "dc_a")
-    , pB !! (0, 0) $ ("bc_b", "dc_b")
-    , StepSecret pA ("L", "") ("A_Bitcoin_S_Name_L_", "__SOME_HASH__") ("A_Dogecoin_S_Name_L_", "__SOME_HASH__")
-    , StepSecret pB ("L", "") ("B_Bitcoin_S_Name_L_", "__SOME_HASH__") ("B_Dogecoin_S_Name_L_", "__SOME_HASH__")
+    pA ! (1, 0) $ "A_deposit"
+    , pB ! (0, 1) $ "B_deposit"
     ]
 
 

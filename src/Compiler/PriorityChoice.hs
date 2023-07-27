@@ -5,7 +5,7 @@ import Data.Map.Strict (Map, elems)
 import Data.List (delete)
 
 import Coins ( Coins, BCoins, DCoins)
-import Syntax.Common ( P (pname), Deposit, Time(..), SName(..), NodeLabel )
+import Syntax.Common ( P (pname), Time(..), SName(..), NodeLabel )
 import Syntax.BitML ( D(Reveal, Withdraw, Split, After) )
 import qualified Syntax.BitML as BitML
 import qualified Syntax.BitMLx as BitMLx
@@ -36,8 +36,10 @@ compilePriorityChoice settings@CompilerSettings{currentLabel = (choiceLabel, spl
 -- their step secret on the other blockchain.
 punishAnyone :: Coins c => CompilerSettings c -> Either CompilationError (BitML.C c)
 punishAnyone settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel), ..} = do
-    otherChainStepSecrets <- eitherLookup (choiceLabel ++ "L", splitLabel) otherChainStepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
-    listEither [ punish p participants balance collateral otherChainStepSecrets | p <- participants]
+    stepSecrets <- eitherLookup
+        (choiceLabel ++ "L", splitLabel) stepSecretsByLabel
+        (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
+    listEither [ punish p participants balance collateral stepSecrets | p <- participants]
 
 -- | Punish a participant that reveals their step secret on the other blockchain
 -- by splitting it's collateral among all other participants on this blockchain.

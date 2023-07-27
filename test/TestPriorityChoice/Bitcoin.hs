@@ -17,21 +17,19 @@ pB = P {pname = "B", pk = "pkB"}
 
 preconditions :: [G BCoins]
 preconditions = [
-    pA ! 1 $ "bd_A"
-    , pB ! 1 $ "bd_B"
-    , pA ! 0 $ "bc_A"
-    , pB ! 0 $ "bc_B"
-    , Secret pA "A_Bitcoin_S_Name_L_" "__SOME_HASH__"
-    , Secret pB "B_Bitcoin_S_Name_L_" "__SOME_HASH__"
+    pA ! 1 $ "A_deposit_Bitcoin"
+    , pB ! 1 $ "B_deposit_Bitcoin"
+    , Secret pA "StepSecret_A__L_" "__HASH__PLACEHOLDER__"
+    , Secret pB "StepSecret_B__L_" "__HASH__PLACEHOLDER__"
     ]
 
 contract :: C BCoins
 contract = [
-    Reveal ["A_Bitcoin_S_Name_L_"] [Withdraw pA]
-    , Reveal ["B_Bitcoin_S_Name_L_"] [Withdraw pA],
+    Reveal ["StepSecret_A__L_"] [Withdraw pA]
+    , Reveal ["StepSecret_B__L_"] [Withdraw pA],
     After 11 (
-        Reveal [] [Reveal ["A_Dogecoin_S_Name_L_"] [Withdraw pB],
-        Reveal ["B_Dogecoin_S_Name_L_"] [Withdraw pA],
+        Reveal [] [Reveal ["StepSecret_A__L_"] [Withdraw pB],
+        Reveal ["StepSecret_B__L_"] [Withdraw pA],
         After 21 (Reveal [] [Withdraw pB])]
     )]
 

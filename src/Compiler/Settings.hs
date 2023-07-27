@@ -4,9 +4,10 @@ module Compiler.Settings (CompilerSettings(..), bitcoinSettings, dogecoinSetting
 import Data.Map.Strict (Map, fromList, empty, insert)
 
 import Coins (BCoins (BCoins), DCoins (DCoins), Coins)
-import Syntax.Common (Time, SName, P, NodeLabel)
+import Syntax.Common (Time, SName, P, NodeLabel, emptyLabel)
 import qualified Syntax.BitMLx as BitMLx
 import qualified Data.Map as Map
+import Compiler.StepSecrets (generateStepSecretsMap)
 
 -- | Compiler settings for a target blockchain.
 data CompilerSettings c = CompilerSettings {
@@ -25,10 +26,7 @@ data CompilerSettings c = CompilerSettings {
     , totalFunds :: c
     -- | Step secrets used in this blockchain (the one we are compiling now)
     -- when compiling a priority choice.
-    , thisChainStepSecretsByLabel :: Map NodeLabel (Map P SName)
-    -- | Step secrets used in the other blockchain (the one we are keeping sync with)
-    -- when compiling a priority choice.
-    , otherChainStepSecretsByLabel :: Map NodeLabel (Map P SName)
+    , stepSecretsByLabel :: Map NodeLabel (Map P SName)
     -- | A security parameter that establishes how much exclusivity time we
     -- give to fases of the stipulation protocol and to actions before skipping them.
     , elapseTime :: Time
@@ -45,40 +43,43 @@ data CompilerSettings c = CompilerSettings {
 }
 
 -- | Compiler settings to produce the Bitcoin BitML contract, given the contract preconditions.
-bitcoinSettings :: [BitMLx.G] -> CompilerSettings BCoins
-bitcoinSettings preconditions = CompilerSettings {
+bitcoinSettings :: [BitMLx.G] -> Either BitMLx.C BitMLx.D -> CompilerSettings BCoins
+bitcoinSettings preconditions contract = CompilerSettings {
     participants = participantsFromPreconditions preconditions
     , balance = balanceFromPreconditions coinChooser preconditions
     , collateral = collateralFromPreconditions coinChooser preconditions
     , totalFunds = totalFundsFromPreconditions coinChooser preconditions
-    , thisChainStepSecretsByLabel = bitcoinStepSecretsFromPreconditions preconditions
-    , otherChainStepSecretsByLabel = dogecoinStepSecretsFromPreconditions preconditions
+    , stepSecretsByLabel = generateStepSecretsMap participants contract
     , currentTime = 1
     , elapseTime = 10
-    , currentLabel = ("", "")
+    , currentLabel = emptyLabel
     , coinChooser = coinChooser
-} where coinChooser = fst
+} where
+    participants = participantsFromPreconditions preconditions
+    coinChooser = fst
+
 
 -- | Compiler settings to produce the Dogecoin BitML contract, given the contract preconditions.
-dogecoinSettings :: [BitMLx.G] -> CompilerSettings DCoins
-dogecoinSettings preconditions = CompilerSettings {
+dogecoinSettings :: [BitMLx.G] -> Either BitMLx.C BitMLx.D -> CompilerSettings DCoins
+dogecoinSettings preconditions contract = CompilerSettings {
     participants = participantsFromPreconditions preconditions
     , balance = balanceFromPreconditions coinChooser preconditions
     , collateral = collateralFromPreconditions coinChooser preconditions
     , totalFunds = totalFundsFromPreconditions coinChooser preconditions
-    , thisChainStepSecretsByLabel = dogecoinStepSecretsFromPreconditions preconditions
-    , otherChainStepSecretsByLabel = bitcoinStepSecretsFromPreconditions preconditions
+    , stepSecretsByLabel = generateStepSecretsMap participants contract
     , currentTime = 1
     , elapseTime = 10
-    , currentLabel = ("", "")
+    , currentLabel = emptyLabel
     , coinChooser = coinChooser
-} where coinChooser = snd
+} where
+    participants = participantsFromPreconditions preconditions
+    coinChooser = snd
 
 -- | Extract a list of the contract's participants given it's preconditions.
 participantsFromPreconditions :: [BitMLx.G] -> [P]
 participantsFromPreconditions preconditions =
     let
-        getParticipant (BitMLx.Collateral p _ _) = [p]
+        getParticipant (BitMLx.Deposit p _ _) = [p]
         getParticipant _notCollateral = []
     in concatMap getParticipant preconditions
 
@@ -105,21 +106,3 @@ totalFundsFromPreconditions coinChooser preconditions = balance + fromInteger (t
         n = length (participantsFromPreconditions preconditions)
         balance = balanceFromPreconditions coinChooser preconditions
         collateral = collateralFromPreconditions coinChooser preconditions
-
--- | Map step secrets by label and participant so that we can easily query for them later.
-bitcoinStepSecretsFromPreconditions :: [BitMLx.G] -> Map NodeLabel (Map P SName)
-bitcoinStepSecretsFromPreconditions preconditions =
-    let
-        aux (BitMLx.StepSecret p l (bn, _) _) = [(l, p, bn)]
-        aux _notStepSecret = []
-        stepSecretTuples = concatMap aux preconditions
-    in Map.fromListWith (Map.unionWith (++)) [(a, Map.singleton b c) | (a, b, c) <- stepSecretTuples]
-
--- | Map step secrets by label and participant so that we can easily query for them later.
-dogecoinStepSecretsFromPreconditions :: [BitMLx.G] -> Map NodeLabel (Map P SName)
-dogecoinStepSecretsFromPreconditions preconditions =
-    let
-        aux (BitMLx.StepSecret p l _ (dn,_)) = [(l, p, dn)]
-        aux _notStepSecret = []
-        stepSecretTuples = concatMap aux preconditions
-    in Map.fromListWith (Map.unionWith (++)) [(a, Map.singleton b c) | (a, b, c) <- stepSecretTuples]

@@ -7,6 +7,7 @@ import Data.Text.Lazy.IO as TL ( writeFile )
 
 import Compiler ( compile )
 import Pretty ( prettyprintNL )
+import Syntax.BitML (ContractAdvertisement(..))
 
 import Examples.Escrow
     ( exampleName, participants, preconditions, contract )
@@ -14,7 +15,7 @@ import Examples.Escrow
 main :: IO ()
 main = do
     case compile preconditions contract of
-        Right ((bitcoinPreconditions, bitcoinContract), (dogecoinPreconditions, dogecoinContract)) -> do
+        Right (ContractAdvertisement (bitcoinPreconditions, bitcoinContract), ContractAdvertisement (dogecoinPreconditions, dogecoinContract)) -> do
             let            
                 bitcoinOutPath = "output/" ++ exampleName ++ "_bitcoin.rkt"
                 dogecoinOutPath = "output/" ++ exampleName ++ "_dogecoin.rkt"

@@ -17,12 +17,9 @@ pC = P {pname = "C", pk = "pkC"}
 
 preconditions :: [G DCoins]
 preconditions = [
-    pA ! 2 $ "dd_A"
-    , pB ! 1 $ "dd_B"
-    , pC ! 3 $ "dd_C"
-    , pA ! 6 $ "dc_A"
-    , pB ! 6 $ "dc_B"
-    , pC ! 6 $ "dc_C"
+    pA ! 8 $ "A_deposit_Dogecoin"
+    , pB ! 7 $ "B_deposit_Dogecoin"
+    , pC ! 9 $ "C_deposit_Dogecoin"
     ]
 
 contract :: C DCoins
