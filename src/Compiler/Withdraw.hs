@@ -42,6 +42,6 @@ compileWithdrawC settings@CompilerSettings{..} fundsMapping =
 -- if they attempt an asynchronous execution. 
 compileWithdrawD :: Coins c => CompilerSettings c -> [(P, (Rational, Rational))] -> Either CompilationError (C c)
 compileWithdrawD settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel), ..} fundMapping = do
-    thisChainStepSecrets <- eitherLookup (choiceLabel, splitLabel) thisChainStepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
+    thisChainStepSecrets <- eitherLookup (choiceLabel, splitLabel) stepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
     executeWithdraw <- compileWithdrawC settings fundMapping
     Right $ revealAny (elems thisChainStepSecrets) executeWithdraw

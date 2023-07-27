@@ -17,12 +17,8 @@ pB = P {pname = "B", pk = "pkB"}
 
 preconditions :: [G BCoins]
 preconditions = [
-    pA ! 1 $ "bd_A"
-    , pB ! 1 $ "bd_B"
-    , pA ! 0 $ "bc_A"
-    , pB ! 0 $ "bc_B"
-    , Secret pA "A_Bitcoin_S_Name__" "A_Bitcoin_S_Hash__"
-    , Secret pB "B_Bitcoin_S_Name__" "B_Bitcoin_S_Hash__"
+    pA ! 1 $ "A_deposit_Bitcoin"
+    , pB ! 1 $ "B_deposit_Bitcoin"
     ]
 
 contract :: C BCoins

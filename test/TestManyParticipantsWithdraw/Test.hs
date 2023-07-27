@@ -13,14 +13,15 @@ import Compiler.Settings ( bitcoinSettings, dogecoinSettings )
 
 testManyParticipantsWithdraw :: TestTree
 testManyParticipantsWithdraw = testCaseSteps "Compile a Withdraw with many parcipants" $ \step -> do
+    step "Building settings..."
+    let bitcoinSettings' = bitcoinSettings BitMLx.preconditions (Left BitMLx.contract)
+    let dogecoinSettings' = dogecoinSettings BitMLx.preconditions (Left BitMLx.contract)
+
+
     step "Compiling preconditions..."
-    let (bitcoinResult, dogecoinResult) = compilePreconditions BitMLx.preconditions
+    let (bitcoinResult, dogecoinResult) = compilePreconditions bitcoinSettings' dogecoinSettings' BitMLx.preconditions
     bitcoinResult @?= Bitcoin.preconditions
     dogecoinResult @?= Dogecoin.preconditions
-
-    step "Building settings..."
-    let bitcoinSettings' = bitcoinSettings BitMLx.preconditions
-    let dogecoinSettings' = dogecoinSettings BitMLx.preconditions
 
     step "Compiling to Bitcoin BitML..."
     let bitcoinResult = compileC bitcoinSettings' BitMLx.contract

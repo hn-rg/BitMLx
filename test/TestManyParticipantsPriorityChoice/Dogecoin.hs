@@ -17,75 +17,72 @@ pC = P {pname = "C", pk = "pkC"}
 
 preconditions :: [G DCoins]
 preconditions = [
-    pA ! 2 $ "dd_A"
-    , pB ! 1 $ "dd_B"
-    , pC ! 3 $ "dd_C"
-    , pA ! 6 $ "dc_A"
-    , pB ! 6 $ "dc_B"
-    , pC ! 6 $ "dc_C"
-    , Secret pA "A_Dogecoin_S_Name_L_" "__SOME_HASH__"
-    , Secret pB "B_Dogecoin_S_Name_L_" "__SOME_HASH__"
-    , Secret pC "C_Dogecoin_S_Name_L_" "__SOME_HASH__"
-    , Secret pA "A_Dogecoin_S_Name_RL_" "__SOME_HASH__"
-    , Secret pB "B_Dogecoin_S_Name_RL_" "__SOME_HASH__"
-    , Secret pC "C_Dogecoin_S_Name_RL_" "__SOME_HASH__"
+    pA ! 8 $ "A_deposit_Dogecoin"
+    , pB ! 7 $ "B_deposit_Dogecoin"
+    , pC ! 9 $ "C_deposit_Dogecoin"
+    , Secret pA "StepSecret_A__L_" "__HASH__PLACEHOLDER__"
+    , Secret pB "StepSecret_B__L_" "__HASH__PLACEHOLDER__"
+    , Secret pC "StepSecret_C__L_" "__HASH__PLACEHOLDER__"
+    , Secret pA "StepSecret_A__RL_" "__HASH__PLACEHOLDER__"
+    , Secret pB "StepSecret_B__RL_" "__HASH__PLACEHOLDER__"
+    , Secret pC "StepSecret_C__RL_" "__HASH__PLACEHOLDER__"
     ]
 
 contract :: C DCoins
 contract = [
-    Reveal ["A_Dogecoin_S_Name_L_"] [
+    Reveal ["StepSecret_A__L_"] [
         Split [
             (DCoins 12,[Withdraw pA]),
             (DCoins 6,[Withdraw pB]),
             (DCoins 6,[Withdraw pC])
         ]
     ],
-    Reveal ["B_Dogecoin_S_Name_L_"] [
+    Reveal ["StepSecret_B__L_"] [
         Split [
             (DCoins 12,[Withdraw pA]),
             (DCoins 6, [Withdraw pB]),
             (DCoins 6, [Withdraw pC])
         ]
     ],
-    Reveal ["C_Dogecoin_S_Name_L_"] [
+    Reveal ["StepSecret_C__L_"] [
         Split [
             (DCoins 12, [Withdraw pA]),
             (DCoins 6, [Withdraw pB]),
             (DCoins 6,[Withdraw pC])
     ]],
         After 11 (Reveal [] [
-            Reveal ["A_Bitcoin_S_Name_L_"] [
+            Reveal ["StepSecret_A__L_"] [
                 Split [
                     (DCoins 12, [Withdraw pB]),
                     (DCoins 12, [Withdraw pC])
                 ]
             ],
-            Reveal ["B_Bitcoin_S_Name_L_"] [
+            Reveal ["StepSecret_B__L_"] [
                 Split [
                     (DCoins 12, [Withdraw pA]),
                     (DCoins 12, [Withdraw pC])
                 ]
             ],
-            Reveal ["C_Bitcoin_S_Name_L_"] [
+            Reveal ["StepSecret_C__L_"] [
                 Split [
                     (DCoins 12, [Withdraw pA]),
                     (DCoins 12,[Withdraw pB])
                 ]],
             After 21 (Reveal [] [
-                Reveal ["A_Dogecoin_S_Name_RL_"] [
+                Reveal ["StepSecret_A__RL_"] [
                     Split [
                         (DCoins 6,[Withdraw pA]),
                         (DCoins 12,[Withdraw pB]),
                         (DCoins 6,[Withdraw pC])
                     ]],
-                Reveal ["B_Dogecoin_S_Name_RL_"] [
+                Reveal ["StepSecret_B__RL_"] [
                     Split [
                         (DCoins 6,[Withdraw pA]),
                         (DCoins 12,[Withdraw pB]),
                         (DCoins 6,[Withdraw pC])
                     ]
                 ],
-                Reveal ["C_Dogecoin_S_Name_RL_"] [
+                Reveal ["StepSecret_C__RL_"] [
                     Split [
                         (DCoins 6,[Withdraw pA]),
                         (DCoins 12,[Withdraw pB]),
@@ -93,19 +90,19 @@ contract = [
                     ]
                 ],
                 After 31 (Reveal [] [
-                    Reveal ["A_Bitcoin_S_Name_RL_"] [
+                    Reveal ["StepSecret_A__RL_"] [
                         Split [
                             (DCoins 12,[Withdraw pB]),
                             (DCoins 12,[Withdraw pC])
                         ]
                     ],
-                    Reveal ["B_Bitcoin_S_Name_RL_"] [
+                    Reveal ["StepSecret_B__RL_"] [
                         Split [
                             (DCoins 12,[Withdraw pA]),
                             (DCoins 12,[Withdraw pC])
                         ]
                     ],
-                    Reveal ["C_Bitcoin_S_Name_RL_"] [
+                    Reveal ["StepSecret_C__RL_"] [
                         Split [
                             (DCoins 12,[Withdraw pA]),
                             (DCoins 12,[Withdraw pB])

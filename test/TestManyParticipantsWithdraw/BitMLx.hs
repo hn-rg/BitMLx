@@ -8,8 +8,7 @@ import Test.Tasty.HUnit ( testCase, (@?=) )
 
 import Coins (BCoins(..), DCoins(..))
 import Syntax.Common (P(..))
-import Syntax.BitMLx ( G (StepSecret), (!), (!!), D(WithdrawD, Split), (+>), C (Withdraw), withdrawAllD, withdrawAll)
-import Prelude hiding ((!!))
+import Syntax.BitMLx ( G , (!), D(WithdrawD, Split), (+>), C (Withdraw), withdrawAllD, withdrawAll)
 
 
 participants :: [P]
@@ -21,12 +20,9 @@ pC = P {pname = "C", pk = "pkC"}
 
 preconditions :: [G]
 preconditions = [
-    pA ! (1, 2) $ ("bd_A", "dd_A")
-    , pB ! (2, 1) $ ("bd_B", "dd_B")
-    , pC ! (3, 3) $ ("bd_C", "dd_C")
-    , pA !! (6, 6) $ ("bc_A", "dc_A")
-    , pB !! (6, 6) $ ("bc_B", "dc_B")
-    , pC !! (6, 6) $ ("bc_C", "dc_C")
+    pA ! (1, 2) $ "A_deposit"
+    , pB ! (2, 1) $ "B_deposit"
+    , pC ! (3, 3) $ "C_deposit"
     ]
 
 contract :: C

@@ -9,13 +9,13 @@ to a dedicated module.
 module Compiler.Contract ( compileC, compileD ) where
 
 import Coins ( Coins, BCoins, DCoins)
-import Syntax.Common ( Deposit, Time, SName, P )
+import Syntax.Common ( Time, SName, P )
 import qualified Syntax.BitML as BitML
 import qualified Syntax.BitMLx as BitMLx
 import Compiler.Error ( CompilationError(..) )
 import Compiler.Withdraw ( compileWithdrawC, compileWithdrawD )
 import Compiler.Preconditions ( compileG )
-import Compiler.Settings ( CompilerSettings, )
+import Compiler.Settings (CompilerSettings)
 import {-# SOURCE #-} Compiler.PriorityChoice (compilePriorityChoice)
 import {-# SOURCE #-} Compiler.Split (compileSplit)
 import Syntax.BitMLx (C(PriorityChoice, TimedPriorityChoice, Withdraw), D (WithdrawD, Split))

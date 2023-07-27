@@ -27,6 +27,7 @@ library
     Compiler.Preconditions
     Compiler.PriorityChoice
     Compiler.Settings
+    Compiler.StepSecrets
     Compiler.Split
     Compiler.Withdraw
     Pretty

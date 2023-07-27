@@ -3,10 +3,9 @@ module Compiler.Error (CompilationError(..)) where
 import Data.Map.Strict (Map, empty)
 
 import Coins ( Coins, BCoins, DCoins)
-import Syntax.Common ( Deposit, Time, SName, P, NodeLabel )
+import Syntax.Common ( Time, SName, P, NodeLabel )
 import qualified Syntax.BitML as BitML
 import qualified Syntax.BitMLx as BitMLx
-import Compiler.Preconditions ( compileG )
 
 -- | Different kind of errors that the compiler can output 
 data CompilationError =

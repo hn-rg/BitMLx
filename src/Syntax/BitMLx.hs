@@ -12,33 +12,17 @@ Use import qualified to avoid ambiguity with BitML syntax.
 module Syntax.BitMLx where
 
 import Coins ( DCoins, BCoins )
-import Syntax.Common ( Pred, Time, SHash, SName, Deposit, P, NodeLabel )
+import Syntax.Common ( Pred, Time, SHash, SName, DepositId, P, NodeLabel )
 
 -- | BitMLx contract preconditions
 data G =
-    -- | Persistent deposits that will fund the contract's initial balance
-    Deposit P (BCoins,DCoins) (Deposit, Deposit)
-    -- | Volatile deposits that can be later added to the contract's balance during execution
-    | Volatile P (BCoins,DCoins) (Deposit, Deposit) (Deposit, Deposit)
-    -- | Collateral deposits that won't be part of the contract balance but,
-    -- will serve to enforce synchronous execution on both blockchains
-    -- using punishment threats to disuade any participants from breaking
-    -- synchronicity.
-    | Collateral P (BCoins,DCoins) (Deposit, Deposit)
-    -- | A secret that can be revealed as a condition for execution of
-    -- a contract
-    | Secret P SName SHash
-    -- | Special secrets that are part of the synchronicity mechanism.
-    -- Notice that even though in our paper step secrets are regular secrets,
-    -- in this PoC implementation, it's more convenient to consider them a special
-    -- kind of secret.
-    -- In a production-oriented environment, the list of step secrets to provide should
-    -- actually be an extra output of the compiler, after analysing the contract's
-    -- structure and keeping track of all priority choices that need them.
-    -- A BitMLx contract runner client would then provide hashes for all the step secrets
-    -- and reveal them as part of the execution (or not, dependig on the implemented strategy)
-    -- without the user ever knowing or caring about them.
-    | StepSecret P NodeLabel (SName, SHash) (SName, SHash) 
+    -- | Participant deposits that will fund the contract balance.
+    -- 
+    -- Note that this doesn't count collaterals, which are specific to the compiler
+    -- implementation and will be added up on each blockchain as part of the compialtion. 
+    Deposit P (BCoins,DCoins) DepositId
+    -- | A secret that can be revealed as a condition for execution of a contract.
+    | Secret P SName SHash 
     deriving (Eq,Show)
 
 -- | BitMLx contract
@@ -54,17 +38,6 @@ data C where
     -- they should add up to 1 on each blockchain. 
     Withdraw :: [(P, (Rational, Rational))] -> C
     deriving (Eq, Ord, Show)
--- data C =
---     PriorityChoice D C
---     -- | A Priority Choice with an added time offset.
---     | TimedPriorityChoice Time D C
---     -- | End the current contract, distributing the funds among participants 
---     -- following the given proportionals.
---     -- 
---     -- The proportions should be numbers between 0 and 1, and
---     -- they should add up to 1 on each blockchain. 
---     | Withdraw [(P, (Rational, Rational))]
---     deriving (Eq, Ord, Show)
 
 -- | Blocking BitMLx contract
 data D where
@@ -89,12 +62,8 @@ data D where
     deriving (Eq, Ord, Show)
 
 -- | Shorthand operator for deposits.
-(!) :: P -> (BCoins, DCoins) -> (Deposit, Deposit) -> G
-(p ! (bv, dv)) (bx, dx) = Deposit p (bv, dv) (bx, dx)
-
--- | Shorthand operator for collaterals
-(!!) :: P -> (BCoins, DCoins) -> (Deposit, Deposit) -> G
-(p !! (bv, dv)) (bx, dx) = Collateral p (bv, dv) (bx, dx)
+(!) :: P -> (BCoins, DCoins) -> DepositId -> G
+(p ! (bv, dv)) z = Deposit p (bv, dv) z
 
 -- | Shorthand operator for Authorizations.
 infix 3 #:

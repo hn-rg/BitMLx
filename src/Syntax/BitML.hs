@@ -10,14 +10,14 @@ Use import qualified to avoid ambiguity with BitMLx syntax.
 -}
 module Syntax.BitML where
 
-import Syntax.Common ( Deposit, P, Pred, SHash, SName, Time )
+import Syntax.Common ( DepositId, P, Pred, SHash, SName, Time )
 import Coins (Coins)
 
 -- | BitML contract preconditions
 -- The arguments are for the coins and deposit types respectively.
 data G c =
-    Deposit P c Deposit
-    | Volatile P c Deposit Deposit
+    Deposit P c DepositId
+    | Volatile P c DepositId DepositId
     | Secret P SName SHash
     deriving (Eq, Show)
 
@@ -28,11 +28,11 @@ type C c = [D c]
 -- | BitML guarded contract
 -- The arguments are for the coins and deposit types respectively.
 data D c =
-    Put [Deposit] (C c)
+    Put [DepositId] (C c)
     | Reveal [SName] (C c)
     | RevealIf [SName] Pred (C c)
-    | PutReveal [Deposit] [SName] (C c)
-    | PutRevealIf [Deposit] [SName] Pred (C c)
+    | PutReveal [DepositId] [SName] (C c)
+    | PutRevealIf [DepositId] [SName] Pred (C c)
     | Withdraw P
     | Auth [P] (D c)
     | Split [(c, C c)]
@@ -41,5 +41,7 @@ data D c =
 
 
 -- | Shorthand operator for deposits.
-(!) :: Coins c => P -> c -> Deposit -> G c
+(!) :: Coins c => P -> c -> DepositId -> G c
 (p ! v) x = Deposit p v x
+
+newtype ContractAdvertisement c = ContractAdvertisement ([G c], C c)

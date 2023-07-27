@@ -12,8 +12,8 @@ data P = P {
     pk :: String
 } deriving (Eq, Ord, Show)
 
--- | A name for a deposit representing a transaction in some blockchain.
-type Deposit = String
+-- | A unique identifier for a participant's deposit.
+type DepositId = String
 
 -- | A name for a secret.
 type SName = String
@@ -24,9 +24,11 @@ type SHash = String
 -- | Time passing on the contract execution.
 type Time = Int
 
--- | A unique identifier for a priority choice in the contract's choice
--- tree, formed by the path from the root to get to it.
+-- | A unique identifier for a node on the syntax tree of a BitMLx contract.
 type NodeLabel = (String, String)
+
+emptyLabel :: NodeLabel
+emptyLabel = ("", "")
 
 -- | Logical predicates
 data Pred =
