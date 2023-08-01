@@ -5,7 +5,7 @@ import Test.Tasty.HUnit ( testCase, (@?=) )
 
 import Coins (DCoins(..))
 import Syntax.Common (P(..))
-import Syntax.BitML ( (!), D(Withdraw, Split, Reveal, After), G (Secret), C )
+import Syntax.BitML ( (!), GuardedContract(Withdraw, Split, Reveal, After), Precondition (Secret), Contract )
 
 participants :: [P]
 participants = [pA, pB]
@@ -15,14 +15,14 @@ pB = P {pname = "B", pk = "pkB"}
 pC = P {pname = "C", pk = "pkC"}
 
 
-preconditions :: [G DCoins]
+preconditions :: [Precondition DCoins]
 preconditions = [
     pA ! 8 $ "A_deposit_Dogecoin"
     , pB ! 7 $ "B_deposit_Dogecoin"
     , pC ! 9 $ "C_deposit_Dogecoin"
     ]
 
-contract :: C DCoins
+contract :: Contract DCoins
 contract = [
     Split [
         (DCoins 9,[Withdraw pA]),

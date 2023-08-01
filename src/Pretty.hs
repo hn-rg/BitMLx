@@ -16,10 +16,10 @@ import Prettyprinter.Symbols.Ascii ( dquotes, parens )
 
 import Syntax.Common ( E(..), P(P, pname), Pred(..) )
 import Syntax.BitML
-    ( D(PutRevealIf, Withdraw, Split, Auth, After, Reveal, Put,
+    ( GuardedContract(PutRevealIf, Withdraw, Split, Auth, After, Reveal, Put,
         RevealIf, PutReveal),
-      C,
-      G(..) )
+      Contract,
+      Precondition(..) )
 import Coins (Coins, BCoins(..), DCoins(..))
 
 
@@ -53,7 +53,7 @@ prettyprintSplit :: [Doc a] -> [Doc a] -> Doc a
 prettyprintSplit xs cs =  align ( pretty "split" <> line)  <+> ( align $ sep $ zipWith ( \x y -> parens (x <+> (pretty "->") <+> y) ) xs cs)
 
 
-prettyprint :: (Coins v, Pretty v) => C v -> Doc x
+prettyprint :: (Coins v, Pretty v) => Contract v -> Doc x
 prettyprint []                             = emptyDoc
 prettyprint (Withdraw p : cs)              = parens ( align ( pretty "withdraw" <+> dquotes (pretty (pname p))) ) <> align (prettyprint cs ) -- <> line
 prettyprint (Split cs : cs')            = parens ( prettyprintSplit (map (pretty . fst) cs) (map (prettyprintNew . snd) cs) ) <> line <> align  (prettyprint cs')  -- <> line
@@ -65,19 +65,19 @@ prettyprint (RevealIf as pred cs : cs')    = parens ( align (pretty "revealif" <
 prettyprint (PutReveal xs as cs : cs')        = parens ( align (pretty "putrevealif" <+> parens (hsep (map pretty xs) )<+> parens (hsep (map pretty as) ) <+> align ( prettyprintNew cs) ) ) <> line <> align (prettyprint cs' )
 prettyprint (PutRevealIf xs as pred cs : cs') = parens ( align (pretty "putrevealif" <+> parens (hsep (map pretty xs)) <+> parens (hsep (map pretty as)) <+> prettypred' pred <+> prettyprintNew cs ) ) <> line <> align (prettyprint cs' )
 
-prettyprintNew :: (Coins v, Pretty v) => C v -> Doc x
+prettyprintNew :: (Coins v, Pretty v) => Contract v -> Doc x
 prettyprintNew []   = emptyDoc
 prettyprintNew [c]  = prettyprint [c]
 prettyprintNew c    = parens $ pretty "choice" <> line <+> align (prettyprint c)
 
 
-prettyprintG :: (Coins v, Pretty v) => [G v] -> Doc x
+prettyprintG :: (Coins v, Pretty v) => [Precondition v] -> Doc x
 prettyprintG                      [] = emptyDoc
 prettyprintG (Deposit p v tx : gs)       = parens ( align (pretty "deposit" <+> dquotes (pretty (pname p)) <+> (pretty v) <+> dquotes (pretty tx) ) ) <> line <> align (prettyprintG gs)
 prettyprintG (Volatile p v x tx : gs)  = parens ( align (pretty "vol-deposit" <+> dquotes (pretty (pname p)) <+> (pretty x ) <+> (pretty v) <+> dquotes (pretty tx) ) ) <> line <> align (prettyprintG gs)
 prettyprintG (Secret p s shash : gs) = parens ( align (pretty "secret"<+> dquotes (pretty (pname p)) <+> (pretty s) <+> dquotes (pretty shash) ) ) <> line <> align (prettyprintG gs)
 
-prettyprintGNew :: (Coins v, Pretty v) => [G v] -> Doc x
+prettyprintGNew :: (Coins v, Pretty v) => [Precondition v] -> Doc x
 prettyprintGNew [] = emptyDoc
 prettyprintGNew g  = parens $ pretty "pre" <> line <+> align (prettyprintG g)
 
@@ -85,11 +85,11 @@ prettyprintP :: [P] -> Doc x
 prettyprintP              [] = emptyDoc
 prettyprintP (P p pk : ps) = parens (align (pretty "participant" <+> dquotes (pretty p) <+> dquotes (pretty pk) ) ) <> line <> align (prettyprintP ps)
 
-prettyprintGC :: (Coins v, Pretty v) => [G v] -> C v-> Doc x
+prettyprintGC :: (Coins v, Pretty v) => [Precondition v] -> Contract v-> Doc x
 prettyprintGC g c = parens ( pretty "contract" <> line <+> align ( prettyprintGNew g ) <> line <> line <+> align ( prettyprintNew c )) <> line
 
-prettyprintPGC :: (Coins v, Pretty v) => [P] -> [G v] -> C v-> Doc x
+prettyprintPGC :: (Coins v, Pretty v) => [P] -> [Precondition v] -> Contract v-> Doc x
 prettyprintPGC p g c = prettyprintP p <> line <> prettyprintGC g c
 
-prettyprintNL :: (Coins v, Pretty v) => [P] -> [G v] -> C v -> Doc x
+prettyprintNL :: (Coins v, Pretty v) => [P] -> [Precondition v] -> Contract v -> Doc x
 prettyprintNL p g c = pretty "#lang bitml" <> line <> line <> pretty "(debug-mode)" <> line <> line <> prettyprintPGC p g c

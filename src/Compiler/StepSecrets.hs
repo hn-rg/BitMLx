@@ -18,7 +18,7 @@ import qualified Data.Map.Strict as Map
 
 import Coins (Coins)
 import Syntax.Common (NodeLabel, P (pname), SName, emptyLabel)
-import Syntax.BitMLx (C(PriorityChoice, TimedPriorityChoice, Withdraw), D (WithdrawD, Split))
+import Syntax.BitMLx (Contract(PriorityChoice, TimedPriorityChoice, Withdraw), GuardedContract (WithdrawD, Split))
 import qualified Syntax.BitMLx as BitMLx
 import qualified Syntax.BitML as BitML
 import qualified Compiler.Auxiliary as Auxiliary
@@ -27,7 +27,7 @@ import Compiler.Auxiliary (enumerate)
 -- | Haskell magic to convert the step secrets to a format easy to index first by
 -- node and then by participant.
 -- The heavy-lifting is done b 
-generateStepSecretsMap :: [P] -> Either BitMLx.C BitMLx.D -> Map.Map NodeLabel (Map.Map P SName)
+generateStepSecretsMap :: [P] -> Either BitMLx.Contract BitMLx.GuardedContract -> Map.Map NodeLabel (Map.Map P SName)
 generateStepSecretsMap participants contract =
     let stepSecretTuples = case contract of
             Left c -> stepSecretsC participants emptyLabel c
@@ -38,7 +38,7 @@ generateStepSecretsMap participants contract =
 
 -- | Generate a list of all needed step secrets for a contract.
 -- Refer to module documentation for explanation of why this is needed.
-stepSecretsC :: [P] -> NodeLabel -> BitMLx.C -> [(NodeLabel, [(P, SName)])]
+stepSecretsC :: [P] -> NodeLabel -> BitMLx.Contract -> [(NodeLabel, [(P, SName)])]
 stepSecretsC participants currentLabel@(moves, splits) (PriorityChoice d c) =
     stepSecretsD participants (moves ++ "L", splits) d
     ++ stepSecretsC participants (moves ++ "R", splits) c
@@ -49,7 +49,7 @@ stepSecretsC participants currentLabel@(moves, splits) (Withdraw p) = []
 
 -- | Generate a list of all needed step secrets for a contract.
 -- Refer to module documentation for explanation of why this is needed.
-stepSecretsD :: [P] -> NodeLabel -> BitMLx.D -> [(NodeLabel, [(P, SName)])]
+stepSecretsD :: [P] -> NodeLabel -> BitMLx.GuardedContract -> [(NodeLabel, [(P, SName)])]
 stepSecretsD participants currentLabel@(moves, splits) (WithdrawD _) =
     [(currentLabel, [(p, stepSecretName currentLabel p) | p <- participants])]
 stepSecretsD participants currentLabel@(moves, splits) (Split branches) =

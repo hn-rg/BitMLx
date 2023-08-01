@@ -8,6 +8,7 @@ import Syntax.Common (Time, SName, P, NodeLabel, emptyLabel)
 import qualified Syntax.BitMLx as BitMLx
 import qualified Data.Map as Map
 import Compiler.StepSecrets (generateStepSecretsMap)
+import Syntax.BitMLx (TimedPreconditions(..))
 
 -- | Compiler settings for a target blockchain.
 data CompilerSettings c = CompilerSettings {
@@ -43,15 +44,15 @@ data CompilerSettings c = CompilerSettings {
 }
 
 -- | Compiler settings to produce the Bitcoin BitML contract, given the contract preconditions.
-bitcoinSettings :: [BitMLx.G] -> Either BitMLx.C BitMLx.D -> CompilerSettings BCoins
-bitcoinSettings preconditions contract = CompilerSettings {
+bitcoinSettings :: BitMLx.TimedPreconditions -> Either BitMLx.Contract BitMLx.GuardedContract -> CompilerSettings BCoins
+bitcoinSettings (TimedPreconditions startingTime elapseTime preconditions) contract = CompilerSettings {
     participants = participantsFromPreconditions preconditions
     , balance = balanceFromPreconditions coinChooser preconditions
     , collateral = collateralFromPreconditions coinChooser preconditions
     , totalFunds = totalFundsFromPreconditions coinChooser preconditions
     , stepSecretsByLabel = generateStepSecretsMap participants contract
-    , currentTime = 1
-    , elapseTime = 10
+    , currentTime = startingTime
+    , elapseTime = elapseTime
     , currentLabel = emptyLabel
     , coinChooser = coinChooser
 } where
@@ -60,15 +61,15 @@ bitcoinSettings preconditions contract = CompilerSettings {
 
 
 -- | Compiler settings to produce the Dogecoin BitML contract, given the contract preconditions.
-dogecoinSettings :: [BitMLx.G] -> Either BitMLx.C BitMLx.D -> CompilerSettings DCoins
-dogecoinSettings preconditions contract = CompilerSettings {
+dogecoinSettings :: BitMLx.TimedPreconditions -> Either BitMLx.Contract BitMLx.GuardedContract -> CompilerSettings DCoins
+dogecoinSettings (TimedPreconditions startingTime elapseTime preconditions) contract = CompilerSettings {
     participants = participantsFromPreconditions preconditions
     , balance = balanceFromPreconditions coinChooser preconditions
     , collateral = collateralFromPreconditions coinChooser preconditions
     , totalFunds = totalFundsFromPreconditions coinChooser preconditions
     , stepSecretsByLabel = generateStepSecretsMap participants contract
-    , currentTime = 1
-    , elapseTime = 10
+    , currentTime = startingTime
+    , elapseTime = elapseTime
     , currentLabel = emptyLabel
     , coinChooser = coinChooser
 } where
@@ -76,7 +77,7 @@ dogecoinSettings preconditions contract = CompilerSettings {
     coinChooser = snd
 
 -- | Extract a list of the contract's participants given it's preconditions.
-participantsFromPreconditions :: [BitMLx.G] -> [P]
+participantsFromPreconditions :: [BitMLx.Precondition] -> [P]
 participantsFromPreconditions preconditions =
     let
         getParticipant (BitMLx.Deposit p _ _) = [p]
@@ -84,7 +85,7 @@ participantsFromPreconditions preconditions =
     in concatMap getParticipant preconditions
 
 -- | Calculate the contract's balance given it's preconditions and a target blockchain.
-balanceFromPreconditions :: Coins a => ((BCoins, DCoins) -> a) -> [BitMLx.G] -> a
+balanceFromPreconditions :: Coins a => ((BCoins, DCoins) -> a) -> [BitMLx.Precondition] -> a
 balanceFromPreconditions coinChooser preconditions =
     let
         getCoins (BitMLx.Deposit _ coins _) = coinChooser coins
@@ -93,14 +94,14 @@ balanceFromPreconditions coinChooser preconditions =
     in sum coinValues
 
 -- | Calculate how much coins participants have to lock as collateral.
-collateralFromPreconditions :: Coins a => ((BCoins, DCoins) -> a) -> [BitMLx.G] -> a
+collateralFromPreconditions :: Coins a => ((BCoins, DCoins) -> a) -> [BitMLx.Precondition] -> a
 collateralFromPreconditions coinChooser preconditions = fromInteger (toInteger (n - 2)) * balance
     where
         n = length (participantsFromPreconditions preconditions)
         balance = balanceFromPreconditions coinChooser preconditions
 
 -- | The total funds (balance + all collaterals) of a contract on a given blockchain.
-totalFundsFromPreconditions :: Coins a => ((BCoins, DCoins) -> a) -> [BitMLx.G] -> a
+totalFundsFromPreconditions :: Coins a => ((BCoins, DCoins) -> a) -> [BitMLx.Precondition] -> a
 totalFundsFromPreconditions coinChooser preconditions = balance + fromInteger (toInteger (n * fromInteger (toInteger collateral)))
     where
         n = length (participantsFromPreconditions preconditions)

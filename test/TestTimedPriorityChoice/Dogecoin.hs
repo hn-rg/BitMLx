@@ -1,4 +1,4 @@
-module TestPriorityChoice.Dogecoin where
+module TestTimedPriorityChoice.Dogecoin where
 
 import Test.Tasty ( defaultMain, testGroup, TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=) )
@@ -29,5 +29,5 @@ contract = [
     After 11 (Reveal [] [
         Reveal ["StepSecret_A__L_"] [Withdraw pB],
         Reveal ["StepSecret_B__L_"] [Withdraw pA],
-        After 21 (Reveal [] [Withdraw pB])]
+        After 42 (Reveal [] [Withdraw pB])]
     )]

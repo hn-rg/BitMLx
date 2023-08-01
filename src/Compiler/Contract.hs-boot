@@ -6,5 +6,5 @@ import qualified Syntax.BitMLx as BitMLx
 import Compiler.Error (CompilationError)
 import Compiler.Settings ( CompilerSettings )
 
-compileC :: Coins c => CompilerSettings c -> BitMLx.C -> Either CompilationError (BitML.C c) 
-compileD :: Coins c => CompilerSettings c -> BitMLx.D -> Either CompilationError (BitML.C c)
+compileC :: Coins c => CompilerSettings c -> BitMLx.Contract -> Either CompilationError (BitML.Contract c) 
+compileD :: Coins c => CompilerSettings c -> BitMLx.GuardedContract -> Either CompilationError (BitML.Contract c)

@@ -15,7 +15,7 @@ import Coins (Coins)
 
 -- | BitML contract preconditions
 -- The arguments are for the coins and deposit types respectively.
-data G c =
+data Precondition c =
     Deposit P c DepositId
     | Volatile P c DepositId DepositId
     | Secret P SName SHash
@@ -23,25 +23,25 @@ data G c =
 
 -- | BitML contract
 -- The arguments are for the coins and deposit types respectively.
-type C c = [D c]
+type Contract c = [GuardedContract c]
 
 -- | BitML guarded contract
 -- The arguments are for the coins and deposit types respectively.
-data D c =
-    Put [DepositId] (C c)
-    | Reveal [SName] (C c)
-    | RevealIf [SName] Pred (C c)
-    | PutReveal [DepositId] [SName] (C c)
-    | PutRevealIf [DepositId] [SName] Pred (C c)
+data GuardedContract c =
+    Put [DepositId] (Contract c)
+    | Reveal [SName] (Contract c)
+    | RevealIf [SName] Pred (Contract c)
+    | PutReveal [DepositId] [SName] (Contract c)
+    | PutRevealIf [DepositId] [SName] Pred (Contract c)
     | Withdraw P
-    | Auth [P] (D c)
-    | Split [(c, C c)]
-    | After Time (D c)
+    | Auth [P] (GuardedContract c)
+    | Split [(c, Contract c)]
+    | After Time (GuardedContract c)
     deriving (Eq, Show)
 
 
 -- | Shorthand operator for deposits.
-(!) :: Coins c => P -> c -> DepositId -> G c
+(!) :: Coins c => P -> c -> DepositId -> Precondition c
 (p ! v) x = Deposit p v x
 
-newtype ContractAdvertisement c = ContractAdvertisement ([G c], C c)
+newtype ContractAdvertisement c = ContractAdvertisement ([Precondition c], Contract c)
