@@ -11,7 +11,7 @@ import Coins (BCoins, DCoins, Coins)
 import Compiler.Error (CompilationError(..))
 import Compiler.Settings (CompilerSettings (..))
 import Compiler.Auxiliary (eitherLookup, revealAny, listEither, scaleCoins, enumerate)
-import Syntax.BitML (D(Split))
+import Syntax.BitML (GuardedContract(Split))
 
 
 -- | A Split statement in BitMLx is also compiled to a split in BitML between the
@@ -24,7 +24,7 @@ import Syntax.BitML (D(Split))
 --
 -- We additionally perform a sanity check that proportions (on thsi chain)
 -- are on the 0-1 range and add up to 1.
-compileSplit :: Coins c => CompilerSettings c -> [((Rational, Rational), BitMLx.C)] -> Either CompilationError (BitML.C c)
+compileSplit :: Coins c => CompilerSettings c -> [((Rational, Rational), BitMLx.Contract)] -> Either CompilationError (BitML.Contract c)
 compileSplit settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel), ..} subcontractsWithProportions = do
     thisChainStepSecrets <- eitherLookup (choiceLabel, splitLabel) stepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
     let coinProportions = map getProportionOnThisCoin subcontractsWithProportions
@@ -39,7 +39,7 @@ compileSplit settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel),
     where
         -- | This function is basically `coinChooser.fst`. But we define it as an auxiliary function
         -- just to name the arguments, hopefully increasing readability.
-        getProportionOnThisCoin :: ((Rational, Rational), BitMLx.C) -> Rational
+        getProportionOnThisCoin :: ((Rational, Rational), BitMLx.Contract) -> Rational
         getProportionOnThisCoin a@((_bitcoinProportions, _dogecoinProportions), _subcontract) = (coinChooser.fst) a
         compileSubcontract (index, (proportions, subcontract)) = do
             let coinProportion = coinChooser proportions

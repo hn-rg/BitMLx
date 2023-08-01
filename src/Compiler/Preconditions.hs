@@ -9,10 +9,11 @@ import Compiler.Settings (CompilerSettings (..))
 import qualified Syntax.BitML as BitML
 import qualified Syntax.BitMLx as BitMLx
 import Data.Map.Strict (toList)
+import Syntax.BitMLx
 
 -- | Compiles a BitMLx contract precondition into a
 -- BitML preconditions for Bitcoin and one for Dogecoin.
-compileG :: CompilerSettings BCoins -> CompilerSettings DCoins -> BitMLx.G -> (BitML.G BCoins, BitML.G DCoins)
+compileG :: CompilerSettings BCoins -> CompilerSettings DCoins -> BitMLx.Precondition -> (BitML.Precondition BCoins, BitML.Precondition DCoins)
 -- | BitML deposits add the needed collaterals on each chain.
 compileG bitcoinSettings dogecoinSettings (BitMLx.Deposit p (bv,dv) z) =
     (
@@ -24,7 +25,7 @@ compileG _ _ (BitMLx.Secret p n h) = (BitML.Secret p n h, BitML.Secret p n h)
 
 
 -- | Extra secrets added to synchronize priority choices. 
-stepSecretPreconditionsFromSettings :: Coins c => CompilerSettings c -> [BitML.G c]
+stepSecretPreconditionsFromSettings :: Coins c => CompilerSettings c -> [BitML.Precondition c]
 stepSecretPreconditionsFromSettings CompilerSettings{stepSecretsByLabel, ..} =
     concat [
         [
@@ -34,10 +35,10 @@ stepSecretPreconditionsFromSettings CompilerSettings{stepSecretsByLabel, ..} =
     ]
 
 -- | Compile all preconditions for a BitMLx contract
-compilePreconditions :: CompilerSettings BCoins -> CompilerSettings DCoins -> [BitMLx.G] -> ([BitML.G BCoins], [BitML.G DCoins])
-compilePreconditions  bitcoinSettings dogecoinSettings bitmlxPreconditions =
+compilePreconditions :: CompilerSettings BCoins -> CompilerSettings DCoins -> TimedPreconditions -> ([BitML.Precondition BCoins], [BitML.Precondition DCoins])
+compilePreconditions  bitcoinSettings dogecoinSettings (TimedPreconditions _ _ preconditions) =
     unzip (
-        map (compileG bitcoinSettings dogecoinSettings) bitmlxPreconditions
+        map (compileG bitcoinSettings dogecoinSettings) preconditions
         ++ zip 
             (stepSecretPreconditionsFromSettings bitcoinSettings)
             (stepSecretPreconditionsFromSettings dogecoinSettings)

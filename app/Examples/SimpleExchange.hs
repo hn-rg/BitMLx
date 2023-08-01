@@ -13,14 +13,14 @@ pB = P {pname = "B", pk = "pkB"}
 participants :: [P]
 participants = [pA, pB]
 
-preconditions :: [G]
-preconditions = [
+preconditions :: TimedPreconditions
+preconditions = TimedPreconditions 1 10 [
     pA ! (1, 0) $ "A_deposit"
     , pB ! (0, 1) $ "B_deposit"
     ]
 
 
-contract :: C
+contract :: Contract
 contract =
     WithdrawD [
         (pA, (0, 1)),

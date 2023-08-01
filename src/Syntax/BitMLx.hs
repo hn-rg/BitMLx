@@ -15,80 +15,89 @@ import Coins ( DCoins, BCoins )
 import Syntax.Common ( Pred, Time, SHash, SName, DepositId, P, NodeLabel )
 
 -- | BitMLx contract preconditions
-data G =
+data Precondition =
     -- | Participant deposits that will fund the contract balance.
     -- 
     -- Note that this doesn't count collaterals, which are specific to the compiler
     -- implementation and will be added up on each blockchain as part of the compialtion. 
     Deposit P (BCoins,DCoins) DepositId
     -- | A secret that can be revealed as a condition for execution of a contract.
-    | Secret P SName SHash 
+    | Secret P SName SHash
     deriving (Eq,Show)
 
+-- | BitMLx cotnract preconditions with starting time and time elapse.
+-- | In the paper, these are called t and delta.
+data TimedPreconditions =
+    TimedPreconditions Time Time [Precondition]
+    deriving (Eq, Show)
+
+
 -- | BitMLx contract
-data C where
-    -- | A Priority Choice between contracts D and C.
-    PriorityChoice :: D -> C -> C
+data Contract where
+    -- | A Priority Choice between contracts GuardedContract and Contract.
+    PriorityChoice :: GuardedContract -> Contract -> Contract
     -- | A Priority Choice with an added time offset.
-    TimedPriorityChoice :: Time -> D -> C -> C
+    TimedPriorityChoice :: Time -> GuardedContract -> Contract -> Contract
     -- | End the current contract, distributing the funds among participants 
     -- following the given proportionals.
     -- 
     -- The proportions should be numbers between 0 and 1, and
     -- they should add up to 1 on each blockchain. 
-    Withdraw :: [(P, (Rational, Rational))] -> C
+    Withdraw :: [(P, (Rational, Rational))] -> Contract
     deriving (Eq, Ord, Show)
 
 -- | Blocking BitMLx contract
-data D where
-    -- | Reveal all secrets on a list as a condition to execute C.
-    Reveal :: [SName] -> C -> D
-    -- | Reveal secrets and evaluate a logical predicate over the values. C will only be executed if both:
+data GuardedContract where
+    -- | Reveal all secrets on a list as a condition to execute Contract.
+    Reveal :: [SName] -> Contract -> GuardedContract
+    -- | Reveal secrets and evaluate a logical predicate over the values. Contract will only be executed if both:
     -- All secrets are revealed and match the hashes in the preconditions.
     -- The predicate evaluates to True when instanciated with the values revealed.
-    RevealIf :: [SName] -> Pred -> C -> D
-    -- | A list of participants are required to authorize the execution of contract D
+    RevealIf :: [SName] -> Pred -> Contract -> GuardedContract
+    -- | A list of participants are required to authorize the execution of contract GuardedContract
     -- with a digital signature.
-    Auth :: [P] -> D -> D
+    Auth :: [P] -> GuardedContract -> GuardedContract
     -- | Splits the contract into many subcontracts.
     -- The numeric Rational are the proportions of the balance each
     -- subcontract takes on each Bitcoin and Dogecoin respectively.
     --
     -- The proportions should be numbers between 0 and 1, and
     -- they should add up to 1 on each blockchain. 
-    Split :: [((Rational, Rational), C)] -> D 
+    Split :: [((Rational, Rational), Contract)] -> GuardedContract 
     -- | Idem to `Withdraw` but as a guarded contract.
-    WithdrawD :: [(P, (Rational, Rational))] -> D
+    WithdrawD :: [(P, (Rational, Rational))] -> GuardedContract
     deriving (Eq, Ord, Show)
 
 -- | Shorthand operator for deposits.
-(!) :: P -> (BCoins, DCoins) -> DepositId -> G
+(!) :: P -> (BCoins, DCoins) -> DepositId -> Precondition
 (p ! (bv, dv)) z = Deposit p (bv, dv) z
 
 -- | Shorthand operator for Authorizations.
 infix 3 #:
-(#:) :: [P] -> D -> D
+(#:) :: [P] -> GuardedContract -> GuardedContract
 (#:) = Auth 
 
 -- | Shorthand operator for priority choices.
 infixr 2 +>
-(+>) :: D -> C -> C
+(+>) :: GuardedContract -> Contract -> Contract
 d +> c = PriorityChoice d c
+
+-- | Shorthand operator for timed priority choices.
+infixr 3 +|
+(+|) :: GuardedContract -> Time -> (GuardedContract, Time)
+d +| t = (d, t)
+
+infixr 2 |>
+(|>) :: (GuardedContract, Time) -> Contract -> Contract
+(d, t) |> c = TimedPriorityChoice t d c
 
 -- | Short-hand unary operator for the particular case where a single participant
 -- withdraws the whole balance. Ideally we would use some syntactic
 -- sugar/overloading/notation abuse to just write this as `Withdraw A`
 -- but that would give us typing problems here.
-withdrawAll :: P -> C
+withdrawAll :: P -> Contract
 withdrawAll p = Withdraw [(p, (1, 1))]
 
 -- | Guarded contract version of `withdrawAll
-withdrawAllD :: P -> D
+withdrawAllD :: P -> GuardedContract
 withdrawAllD p = WithdrawD [(p, (1, 1))]
-
-($@) :: () -> P -> C
-() $@ p = Withdraw [(p, (1, 1))]
-
-($$@) :: () -> P -> D
-() $$@ p = WithdrawD [(p, (1, 1))]
-

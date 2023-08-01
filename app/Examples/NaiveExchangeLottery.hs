@@ -13,15 +13,15 @@ pB = P {pname = "B", pk = "pkB"}
 participants :: [P]
 participants = [pA, pB]
 
-preconditions :: [G]
-preconditions = [
+preconditions :: TimedPreconditions
+preconditions = TimedPreconditions 1 10 [
     pA ! (1, 1) $ "A_deposit"
     , pB ! (1, 1) $ "B_deposit"
     , Secret pA "a" "__SOME_HASH__"
     , Secret pB "b" "__SOME_HASH__"
     ]
 
-contract :: C
+contract :: Contract
 contract =
     RevealIf ["a", "b"]
         (PAnd

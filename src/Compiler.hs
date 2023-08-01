@@ -16,15 +16,16 @@ import Compiler.Error ( CompilationError )
 import Compiler.Settings ( CompilerSettings(..), bitcoinSettings, dogecoinSettings )
 import Compiler.Contract( compileC, compileD )
 import Compiler.Preconditions ( compilePreconditions )
+import Syntax.BitMLx
 
 
 -- | Given a BitMLx contract advertisement, compiles it to a Bitcoin BitML contract
 -- advertisement and a Dogecoin BitML contract advertisement.
-compile :: [BitMLx.G] -> BitMLx.C -> Either CompilationError (BitML.ContractAdvertisement BCoins, BitML.ContractAdvertisement DCoins)
-compile preconditions contract = do
-    let btcSettings = bitcoinSettings preconditions (Left contract)
-        dogeSettings = dogecoinSettings preconditions (Left contract)
+compile :: BitMLx.TimedPreconditions -> BitMLx.Contract -> Either CompilationError (BitML.ContractAdvertisement BCoins, BitML.ContractAdvertisement DCoins)
+compile timedPreconditions contract = do
+    let btcSettings = bitcoinSettings timedPreconditions (Left contract)
+        dogeSettings = dogecoinSettings timedPreconditions (Left contract)
     bitcoinContract <- compileC btcSettings contract
     dogecoinContract <- compileC dogeSettings contract
-    let (bitcoinPreconditions, dogecoinPreconditions) = compilePreconditions btcSettings dogeSettings preconditions
+    let (bitcoinPreconditions, dogecoinPreconditions) = compilePreconditions btcSettings dogeSettings timedPreconditions
     Right (ContractAdvertisement (bitcoinPreconditions, bitcoinContract), ContractAdvertisement (dogecoinPreconditions, dogecoinContract))

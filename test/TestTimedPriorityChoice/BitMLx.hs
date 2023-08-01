@@ -1,14 +1,15 @@
 
-module TestWithdrawD.BitMLx where
-    
-import Data.Ratio ((%))
+module TestTimedPriorityChoice.BitMLx where
 
 import Test.Tasty ( defaultMain, testGroup, TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=) )
 
 import Coins (BCoins(..), DCoins(..))
 import Syntax.Common (P(..))
-import Syntax.BitMLx ( Precondition, (!), GuardedContract(WithdrawD), withdrawAllD, TimedPreconditions(..))
+import Syntax.BitMLx (
+    Precondition , (!), GuardedContract(WithdrawD), (+|), (|>), (+|>), Contract (Withdraw, TimedPriorityChoice),
+    withdrawAllD, withdrawAll, TimedPreconditions(..)
+    )
 
 
 participants :: [P]
@@ -23,8 +24,5 @@ preconditions = TimedPreconditions 1 10 [
     , pB ! (1, 1) $ "B_deposit"
     ]
 
-contract :: GuardedContract
-contract = WithdrawD [
-    (pA, (1, 1%2)),
-    (pB, (0, 1%2))
-    ]
+contract :: Contract
+contract =  withdrawAllD pA +|42|> withdrawAll pB 

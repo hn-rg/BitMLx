@@ -14,12 +14,12 @@ import Compiler.Error (CompilationError (NonDividableCoins))
 -- | Small cheat to convert a guarded contract into a contract.
 -- Notice that the price of using tau is that it introduces an
 -- extra transaction, with it's associated transaction fees.
-tau :: BitML.C c -> BitML.D c
+tau :: BitML.Contract c -> BitML.GuardedContract c
 tau = BitML.Reveal []
 
 -- | An alternative reveal construction that works by requiring any of a list of secrets
 -- to be revealed instead of all of them.
-revealAny :: Coins c =>  [SName] -> BitML.C c -> BitML.C c
+revealAny :: Coins c =>  [SName] -> BitML.Contract c -> BitML.Contract c
 revealAny secrets subcontract =  [BitML.Reveal [s] subcontract | s <- secrets]
 
 -- | Auxiliary function to convert a lookup from Maybe to Either

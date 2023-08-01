@@ -24,4 +24,5 @@ data CompilationError =
     | NotImplemented
     -- | This Participant has no deposit
     | NoDeposit P
+    | UnsafeTimedPriorityChoice Time
     deriving (Show, Eq)

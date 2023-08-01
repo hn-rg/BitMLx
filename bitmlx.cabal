@@ -73,6 +73,10 @@ test-suite bitmlx-test
     TestPriorityChoice.Bitcoin
     TestPriorityChoice.Dogecoin
     TestPriorityChoice.Test
+    TestTimedPriorityChoice.BitMLx
+    TestTimedPriorityChoice.Bitcoin
+    TestTimedPriorityChoice.Dogecoin
+    TestTimedPriorityChoice.Test
     TestWithdrawD.BitMLx
     TestWithdrawD.Bitcoin
     TestWithdrawD.Dogecoin
