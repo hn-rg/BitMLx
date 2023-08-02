@@ -43,7 +43,8 @@ data Contract where
     -- 
     -- The proportions should be numbers between 0 and 1, and
     -- they should add up to 1 on each blockchain. 
-    Withdraw :: [(P, (Rational, Rational))] -> Contract
+    Withdraw :: [((BCoins, DCoins), P)] -> Contract
+    WithdrawAll :: P -> Contract
     deriving (Eq, Ord, Show)
 
 -- | Blocking BitMLx contract
@@ -63,9 +64,10 @@ data GuardedContract where
     --
     -- The proportions should be numbers between 0 and 1, and
     -- they should add up to 1 on each blockchain. 
-    Split :: [((Rational, Rational), Contract)] -> GuardedContract 
+    Split :: [((BCoins, DCoins), Contract)] -> GuardedContract 
     -- | Idem to `Withdraw` but as a guarded contract.
-    WithdrawD :: [(P, (Rational, Rational))] -> GuardedContract
+    WithdrawD :: [((BCoins, DCoins), P)] -> GuardedContract
+    WithdrawAllD :: P -> GuardedContract
     deriving (Eq, Ord, Show)
 
 -- | Shorthand operator for deposits.
@@ -90,14 +92,3 @@ d +| t = (d, t)
 infixr 2 |>
 (|>) :: (GuardedContract, Time) -> Contract -> Contract
 (d, t) |> c = TimedPriorityChoice t d c
-
--- | Short-hand unary operator for the particular case where a single participant
--- withdraws the whole balance. Ideally we would use some syntactic
--- sugar/overloading/notation abuse to just write this as `Withdraw A`
--- but that would give us typing problems here.
-withdrawAll :: P -> Contract
-withdrawAll p = Withdraw [(p, (1, 1))]
-
--- | Guarded contract version of `withdrawAll
-withdrawAllD :: P -> GuardedContract
-withdrawAllD p = WithdrawD [(p, (1, 1))]

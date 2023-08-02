@@ -25,10 +25,10 @@ contract :: Contract
 contract =
     Reveal ["a", "b"] (
         Withdraw [
-            (pA, (1%2, 1%2)),
-            (pB, (1%2, 1%2))
+            ((1, 1), pA),
+            ((1, 1), pB)
         ]
     ) 
-    +> Reveal ["a"] (withdrawAll pA)
-    +> Reveal ["b"] (withdrawAll pB)
-    +> withdrawAll pA
+    +> Reveal ["a"] (WithdrawAll pA)
+    +> Reveal ["b"] (WithdrawAll pB)
+    +> WithdrawAll pA

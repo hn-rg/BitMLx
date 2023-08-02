@@ -18,7 +18,7 @@ import qualified Data.Map.Strict as Map
 
 import Coins (Coins)
 import Syntax.Common (NodeLabel, P (pname), SName, emptyLabel)
-import Syntax.BitMLx (Contract(PriorityChoice, TimedPriorityChoice, Withdraw), GuardedContract (WithdrawD, Split))
+import Syntax.BitMLx (Contract(PriorityChoice, TimedPriorityChoice, Withdraw, WithdrawAll), GuardedContract (WithdrawD, Split, WithdrawAllD))
 import qualified Syntax.BitMLx as BitMLx
 import qualified Syntax.BitML as BitML
 import qualified Compiler.Auxiliary as Auxiliary
@@ -45,12 +45,15 @@ stepSecretsC participants currentLabel@(moves, splits) (PriorityChoice d c) =
 stepSecretsC participants currentLabel@(moves, splits) (TimedPriorityChoice t d c) =
     stepSecretsD participants (moves ++ "L", splits) d
     ++ stepSecretsC participants (moves ++ "R", splits) c
-stepSecretsC participants currentLabel@(moves, splits) (Withdraw p) = []
+stepSecretsC participants currentLabel@(moves, splits) (Withdraw _) = []
+stepSecretsC participants currentLabel@(moves, splits) (WithdrawAll _) = []
 
 -- | Generate a list of all needed step secrets for a contract.
 -- Refer to module documentation for explanation of why this is needed.
 stepSecretsD :: [P] -> NodeLabel -> BitMLx.GuardedContract -> [(NodeLabel, [(P, SName)])]
 stepSecretsD participants currentLabel@(moves, splits) (WithdrawD _) =
+    [(currentLabel, [(p, stepSecretName currentLabel p) | p <- participants])]
+stepSecretsD participants currentLabel@(moves, splits) (WithdrawAllD _) =
     [(currentLabel, [(p, stepSecretName currentLabel p) | p <- participants])]
 stepSecretsD participants currentLabel@(moves, splits) (Split branches) =
     (currentLabel, [(p, stepSecretName currentLabel p) | p <- participants])

@@ -13,12 +13,12 @@ import Syntax.Common ( Time, SName, P )
 import qualified Syntax.BitML as BitML
 import qualified Syntax.BitMLx as BitMLx
 import Compiler.Error ( CompilationError(..) )
-import Compiler.Withdraw ( compileWithdrawC, compileWithdrawD )
+import Compiler.Withdraw ( compileWithdrawC, compileWithdrawD, compileWithdrawAllC, compileWithdrawAllD )
 import Compiler.Preconditions ( compileG )
 import Compiler.Settings (CompilerSettings)
 import {-# SOURCE #-} Compiler.PriorityChoice (compilePriorityChoice)
 import {-# SOURCE #-} Compiler.Split (compileSplit)
-import Syntax.BitMLx (Contract(PriorityChoice, TimedPriorityChoice, Withdraw), GuardedContract (WithdrawD, Split))
+import Syntax.BitMLx (Contract(PriorityChoice, TimedPriorityChoice, Withdraw, WithdrawAll), GuardedContract (WithdrawD, Split, WithdrawAllD))
 
 
 -- | Given a BitMLx contract, compile it to a contract on the target blockchain,
@@ -27,6 +27,7 @@ compileC :: Coins c => CompilerSettings c -> BitMLx.Contract -> Either Compilati
 compileC settings (PriorityChoice d c) = compilePriorityChoice settings d c Nothing
 compileC settings (TimedPriorityChoice t d c) = compilePriorityChoice settings d c (Just t)
 compileC settings (Withdraw fundsMapping) = compileWithdrawC settings fundsMapping
+compileC settings (WithdrawAll p) = compileWithdrawAllC settings p
 
 -- | Given a BitMLx guarded contract, compile it to a contract on the target blockchain,
 -- according to some settings previously compiled from the contract preconditions.
@@ -34,5 +35,6 @@ compileC settings (Withdraw fundsMapping) = compileWithdrawC settings fundsMappi
 compileD :: Coins c => CompilerSettings c -> BitMLx.GuardedContract -> Either CompilationError (BitML.Contract c)
 compileD settings d = case d of
     WithdrawD fundsMapping -> compileWithdrawD settings fundsMapping
+    WithdrawAllD p -> compileWithdrawAllD settings p
     Split subcontracts -> compileSplit settings subcontracts
     _notImplementedYet -> Left NotImplemented

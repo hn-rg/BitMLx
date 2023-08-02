@@ -6,7 +6,7 @@ import Test.Tasty.HUnit ( testCase, (@?=) )
 
 import Coins (BCoins(..), DCoins(..))
 import Syntax.Common (P(..))
-import Syntax.BitMLx ( Precondition , (!), GuardedContract(WithdrawD), (+>), Contract (Withdraw), withdrawAllD, withdrawAll, TimedPreconditions(..))
+import Syntax.BitMLx ( Precondition , (!), GuardedContract(WithdrawAllD), (+>), Contract (WithdrawAll), TimedPreconditions(..))
 
 
 participants :: [P]
@@ -22,4 +22,4 @@ preconditions = TimedPreconditions 1 10 [
     ]
 
 contract :: Contract
-contract = withdrawAllD pA +> withdrawAll pB
+contract = WithdrawAllD pA +> WithdrawAll pB

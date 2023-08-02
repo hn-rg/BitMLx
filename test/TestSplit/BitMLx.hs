@@ -6,7 +6,7 @@ import Test.Tasty.HUnit ( testCase, (@?=) )
 
 import Coins (BCoins(..), DCoins(..))
 import Syntax.Common (P(..))
-import Syntax.BitMLx ( Precondition, (!), GuardedContract(WithdrawD, Split), Contract, (+>), withdrawAll, TimedPreconditions(..))
+import Syntax.BitMLx ( Precondition, (!), GuardedContract(Split), Contract(WithdrawAll), (+>), TimedPreconditions(..))
 import Data.Ratio ((%))
 
 
@@ -24,6 +24,6 @@ preconditions = TimedPreconditions 1 10 [
 
 contract :: GuardedContract
 contract = Split [
-        ((3%4, 1%4), withdrawAll pA),
-        ((1%4, 3%4), withdrawAll pB)
+        ((3, 1), WithdrawAll pA),
+        ((1, 3), WithdrawAll pB)
     ]

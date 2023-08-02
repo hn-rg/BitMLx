@@ -40,7 +40,7 @@ data CompilerSettings c = CompilerSettings {
     , currentLabel :: NodeLabel
     -- | A hack to configure the compiler to choose the correct argument on 2-tuples
     -- of the form (bitcoin, dogecoin). Useful when compiling cases like Split.
-    , coinChooser :: (Rational, Rational) -> Rational
+    , coinChooser :: (BCoins, DCoins) -> c
 }
 
 -- | Compiler settings to produce the Bitcoin BitML contract, given the contract preconditions.
