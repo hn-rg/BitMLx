@@ -24,6 +24,6 @@ preconditions = TimedPreconditions 1 10 [
 
 contract :: Contract
 contract = Withdraw [
-    (pA, (1, 1%2)),
-    (pB, (0, 1%2))
+    ((2, 1), pA),
+    ((0, 1), pB)
     ]

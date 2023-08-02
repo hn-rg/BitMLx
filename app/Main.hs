@@ -9,7 +9,7 @@ import Compiler ( compile )
 import Pretty ( prettyprintNL )
 import Syntax.BitML (ContractAdvertisement(..))
 
-import Examples.Escrow
+import Examples.SimpleExchange
     ( exampleName, participants, preconditions, contract )
 
 main :: IO ()

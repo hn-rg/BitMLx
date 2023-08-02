@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
-module Compiler.Split ( compileSplit ) where
+module Compiler.Split ( SplitBranch, compileSplit ) where
 
 import Data.Map (elems)
 import Data.Ratio (numerator, denominator)
@@ -24,28 +24,29 @@ import Syntax.BitML (GuardedContract(Split))
 --
 -- We additionally perform a sanity check that proportions (on thsi chain)
 -- are on the 0-1 range and add up to 1.
-compileSplit :: Coins c => CompilerSettings c -> [((Rational, Rational), BitMLx.Contract)] -> Either CompilationError (BitML.Contract c)
-compileSplit settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel), ..} subcontractsWithProportions = do
-    thisChainStepSecrets <- eitherLookup (choiceLabel, splitLabel) stepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
-    let coinProportions = map getProportionOnThisCoin subcontractsWithProportions
-    if sum coinProportions /= 1 || any (\p -> p < 0 || p > 1) coinProportions
-        then Left (InconsistentSplit  coinProportions)
-        else Right ()
-    compiledSubcontracts <- listEither (
-        map compileSubcontract (enumerate subcontractsWithProportions)
-        )
-    Right $ revealAny (elems thisChainStepSecrets) [Split compiledSubcontracts]
 
-    where
-        -- | This function is basically `coinChooser.fst`. But we define it as an auxiliary function
-        -- just to name the arguments, hopefully increasing readability.
-        getProportionOnThisCoin :: ((Rational, Rational), BitMLx.Contract) -> Rational
-        getProportionOnThisCoin a@((_bitcoinProportions, _dogecoinProportions), _subcontract) = (coinChooser.fst) a
-        compileSubcontract (index, (proportions, subcontract)) = do
-            let coinProportion = coinChooser proportions
-                newLabel = (choiceLabel, splitLabel ++ show index)
-            newBalance <- balance `scaleCoins` coinProportion
-            newCollateral <- collateral `scaleCoins` coinProportion
-            newTotalFunds <- totalFunds `scaleCoins` coinProportion
-            compiledSubcontract <- compileC settings{balance=newBalance, collateral=newCollateral, totalFunds=newTotalFunds, currentLabel=newLabel} subcontract
-            Right (newTotalFunds, compiledSubcontract)
+type SplitBranch = ((BCoins, DCoins), BitMLx.Contract)
+
+compileSplit :: Coins c => CompilerSettings c -> [SplitBranch] -> Either CompilationError (BitML.Contract c)
+compileSplit settings branches = do
+    let label = currentLabel settings
+    stepSecrets <- eitherLookup label (stepSecretsByLabel settings) (StepSecretsNotFoundForNode label)
+    compiledBranches <- listEither [
+        compileSplitBranch settings i branch
+        | (i, branch) <- enumerate branches
+        ]
+    Right $ revealAny (elems stepSecrets) [Split compiledBranches]
+
+
+compileSplitBranch :: Coins c => CompilerSettings c -> Integer -> SplitBranch -> Either CompilationError (c, BitML.Contract c)
+compileSplitBranch settings index branch = do
+    let ((btcBalance, dogeBalance), subcontract) = branch
+        nParticipants = fromInteger (toInteger (length (participants settings)))
+        balance = coinChooser settings (btcBalance, dogeBalance)
+        collateral = (nParticipants - 2) * balance
+        totalFunds = balance + nParticipants * collateral
+        (choiceLabel, splitLabel) = currentLabel settings
+        newLabel = (choiceLabel, splitLabel ++ show index)
+        newSettings = settings{balance=balance, collateral=collateral, totalFunds=totalFunds, currentLabel=newLabel}
+    compiledSubcontract <- compileC newSettings subcontract
+    Right (totalFunds, compiledSubcontract)
