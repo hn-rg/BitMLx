@@ -23,6 +23,7 @@ import Compiler.WellFormed ( assertWellFormed )
 -- advertisement and a Dogecoin BitML contract advertisement.
 compile :: BitMLx.TimedPreconditions -> BitMLx.Contract -> Either CompilationError (BitML.ContractAdvertisement BCoins, BitML.ContractAdvertisement DCoins)
 compile timedPreconditions contract = do
+    assertWellFormed (BitMLx.ContractAdvertisement timedPreconditions contract)
     let btcSettings = bitcoinSettings timedPreconditions (Left contract)
         dogeSettings = dogecoinSettings timedPreconditions (Left contract)
     bitcoinContract <- compileC btcSettings contract

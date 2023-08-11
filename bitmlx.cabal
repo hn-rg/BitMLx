@@ -30,6 +30,7 @@ library
     Compiler.StepSecrets
     Compiler.Split
     Compiler.Withdraw
+    Compiler.WellFormed
     Pretty
   build-depends: 
     prettyprinter,
@@ -73,10 +74,6 @@ test-suite bitmlx-test
     TestPriorityChoice.Bitcoin
     TestPriorityChoice.Dogecoin
     TestPriorityChoice.Test
-    TestTimedPriorityChoice.BitMLx
-    TestTimedPriorityChoice.Bitcoin
-    TestTimedPriorityChoice.Dogecoin
-    TestTimedPriorityChoice.Test
     TestWithdrawD.BitMLx
     TestWithdrawD.Bitcoin
     TestWithdrawD.Dogecoin
@@ -89,5 +86,9 @@ test-suite bitmlx-test
     TestManyParticipantsPriorityChoice.Bitcoin
     TestManyParticipantsPriorityChoice.Dogecoin
     TestManyParticipantsPriorityChoice.Test
+    WellFormedFails.InconsistentWithdraw
+    WellFormedFails.InconsistentSplit
+    WellFormedFails.UncommitedSecret
+    WellFormedFails.NoDeposit
   build-depends:      base >= 4.7 && < 5, tasty, tasty-hunit, tasty-quickcheck, bitmlx
   default-language:   Haskell2010

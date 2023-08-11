@@ -7,7 +7,7 @@ import Data.List (delete)
 import Coins ( Coins, BCoins, DCoins )
 import Syntax.Common ( P )
 import Syntax.BitML (GuardedContract(Withdraw, Split), Contract)
-import Compiler.Auxiliary (eitherLookup, revealAny, scaleCoins, listEither, tupleEither)
+import Compiler.Auxiliary (eitherLookup, revealAny, listEither, tupleEither)
 import Compiler.Settings ( CompilerSettings(..) )
 import Compiler.Error (CompilationError (StepSecretsNotFoundForNode))
 

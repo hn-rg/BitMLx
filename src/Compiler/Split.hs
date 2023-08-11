@@ -10,7 +10,7 @@ import {-# SOURCE #-} Compiler.Contract (compileC)
 import Coins (BCoins, DCoins, Coins)
 import Compiler.Error (CompilationError(..))
 import Compiler.Settings (CompilerSettings (..))
-import Compiler.Auxiliary (eitherLookup, revealAny, listEither, scaleCoins, enumerate)
+import Compiler.Auxiliary (eitherLookup, revealAny, listEither, enumerate)
 import Syntax.BitML (GuardedContract(Split))
 
 

@@ -8,8 +8,6 @@ import Coins (Coins)
 import Syntax.Common (SName, P)
 import qualified Syntax.BitML as BitML
 import qualified Syntax.BitMLx as BitMLx
-import Compiler.Error (CompilationError (NonDividableCoins))
-
 
 -- | Small cheat to convert a guarded contract into a contract.
 -- Notice that the price of using tau is that it introduces an
@@ -44,15 +42,6 @@ tupleEither :: (Either e a, b) -> Either e (a, b)
 tupleEither (Left err, y) = Left err
 tupleEither (Right x, y) = Right (x, y)
 
--- Auxiliary function to split funds by some ratio.
--- Fails if the result would be a non-whole number.
-scaleCoins :: Coins c => c -> Rational -> Either CompilationError c
-scaleCoins wrappedCoin r
-    | (coins * n) `mod` d == 0 = Right $ fromInteger $ coins * n `div` d
-    | otherwise = Left $ NonDividableCoins coins r
-    where coins = toInteger wrappedCoin
-          n = numerator r
-          d = denominator r
 
 -- | Creates a list with the elements of the original list enumerated in tuples.
 enumerate :: [b] -> [(Integer, b)]

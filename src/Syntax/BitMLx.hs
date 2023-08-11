@@ -68,6 +68,10 @@ data GuardedContract where
     WithdrawAllD :: P -> GuardedContract
     deriving (Eq, Ord, Show)
 
+data ContractAdvertisement =
+    ContractAdvertisement TimedPreconditions Contract
+    deriving (Eq, Show)
+
 -- | Shorthand operator for deposits.
 (!) :: P -> (BCoins, DCoins) -> DepositId -> Precondition
 (p ! (bv, dv)) z = Deposit p (bv, dv) z
