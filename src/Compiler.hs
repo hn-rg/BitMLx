@@ -16,7 +16,7 @@ import Compiler.Error ( CompilationError )
 import Compiler.Settings ( CompilerSettings(..), bitcoinSettings, dogecoinSettings )
 import Compiler.Contract( compileC, compileD )
 import Compiler.Preconditions ( compilePreconditions )
-import Syntax.BitMLx
+import Compiler.WellFormed ( assertWellFormed )
 
 
 -- | Given a BitMLx contract advertisement, compiles it to a Bitcoin BitML contract

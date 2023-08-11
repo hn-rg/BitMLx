@@ -7,4 +7,4 @@ import qualified Syntax.BitMLx as BitMLx
 import Compiler.Error ( CompilationError )
 import Compiler.Settings ( CompilerSettings )
 
-compilePriorityChoice :: Coins c => CompilerSettings c -> BitMLx.GuardedContract -> BitMLx.Contract -> Maybe Time -> Either CompilationError (BitML.Contract c)
+compilePriorityChoice :: Coins c => CompilerSettings c -> BitMLx.GuardedContract -> BitMLx.Contract -> Either CompilationError (BitML.Contract c)

@@ -18,14 +18,13 @@ import Compiler.Preconditions ( compileG )
 import Compiler.Settings (CompilerSettings)
 import {-# SOURCE #-} Compiler.PriorityChoice (compilePriorityChoice)
 import {-# SOURCE #-} Compiler.Split (compileSplit)
-import Syntax.BitMLx (Contract(PriorityChoice, TimedPriorityChoice, Withdraw, WithdrawAll), GuardedContract (WithdrawD, Split, WithdrawAllD))
+import Syntax.BitMLx (Contract(PriorityChoice, Withdraw, WithdrawAll), GuardedContract (WithdrawD, Split, WithdrawAllD))
 
 
 -- | Given a BitMLx contract, compile it to a contract on the target blockchain,
 -- according to some settings previously compiled from the contract preconditions.
 compileC :: Coins c => CompilerSettings c -> BitMLx.Contract -> Either CompilationError (BitML.Contract c)
-compileC settings (PriorityChoice d c) = compilePriorityChoice settings d c Nothing
-compileC settings (TimedPriorityChoice t d c) = compilePriorityChoice settings d c (Just t)
+compileC settings (PriorityChoice d c) = compilePriorityChoice settings d c
 compileC settings (Withdraw fundsMapping) = compileWithdrawC settings fundsMapping
 compileC settings (WithdrawAll p) = compileWithdrawAllC settings p
 
