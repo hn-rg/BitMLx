@@ -36,8 +36,6 @@ data TimedPreconditions =
 data Contract where
     -- | A Priority Choice between contracts GuardedContract and Contract.
     PriorityChoice :: GuardedContract -> Contract -> Contract
-    -- | A Priority Choice with an added time offset.
-    TimedPriorityChoice :: Time -> GuardedContract -> Contract -> Contract
     -- | End the current contract, distributing the funds among participants 
     -- following the given proportionals.
     -- 
@@ -70,6 +68,10 @@ data GuardedContract where
     WithdrawAllD :: P -> GuardedContract
     deriving (Eq, Ord, Show)
 
+data ContractAdvertisement =
+    ContractAdvertisement TimedPreconditions Contract
+    deriving (Eq, Show)
+
 -- | Shorthand operator for deposits.
 (!) :: P -> (BCoins, DCoins) -> DepositId -> Precondition
 (p ! (bv, dv)) z = Deposit p (bv, dv) z
@@ -83,12 +85,3 @@ infix 3 #:
 infixr 2 +>
 (+>) :: GuardedContract -> Contract -> Contract
 d +> c = PriorityChoice d c
-
--- | Shorthand operator for timed priority choices.
-infixr 3 +|
-(+|) :: GuardedContract -> Time -> (GuardedContract, Time)
-d +| t = (d, t)
-
-infixr 2 |>
-(|>) :: (GuardedContract, Time) -> Contract -> Contract
-(d, t) |> c = TimedPriorityChoice t d c

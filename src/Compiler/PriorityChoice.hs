@@ -22,17 +22,12 @@ import Compiler.Auxiliary (eitherLookup, tau, revealAny, listEither)
 --      we punish them by splitting their collateral on this chain among everyone else. The honest participants
 --      then also receive a refund for their collaterals.
 --    - If `skipTime` passes and everyone is skipping synchronously, then we execute C.
-compilePriorityChoice :: Coins c => CompilerSettings c -> BitMLx.GuardedContract -> BitMLx.Contract -> Maybe Time -> Either CompilationError (BitML.Contract c)
-compilePriorityChoice settings d c overrideTimeout = do
+compilePriorityChoice :: Coins c => CompilerSettings c -> BitMLx.GuardedContract -> BitMLx.Contract -> Either CompilationError (BitML.Contract c)
+compilePriorityChoice settings d c = do
         let (choiceLabel, splitLabel) = currentLabel settings
             tNow = currentTime settings
             delta = elapseTime settings
-        skipTime <- case overrideTimeout of
-            Just userDefinedTimelock ->
-                if userDefinedTimelock >= tNow + 2 * delta
-                    then Right userDefinedTimelock
-                    else Left (UnsafeTimedPriorityChoice userDefinedTimelock)
-            Nothing -> Right (tNow + 2 * delta)
+            skipTime = tNow + 2 * delta
         d' <- compileD settings{currentLabel = (choiceLabel ++ "L", splitLabel), currentTime = tNow + delta} d
         c' <- compileC settings{currentLabel = (choiceLabel ++ "R", splitLabel), currentTime = skipTime} c
         punish <- punishAnyone settings

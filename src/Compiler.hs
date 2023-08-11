@@ -16,13 +16,14 @@ import Compiler.Error ( CompilationError )
 import Compiler.Settings ( CompilerSettings(..), bitcoinSettings, dogecoinSettings )
 import Compiler.Contract( compileC, compileD )
 import Compiler.Preconditions ( compilePreconditions )
-import Syntax.BitMLx
+import Compiler.WellFormed ( assertWellFormed )
 
 
 -- | Given a BitMLx contract advertisement, compiles it to a Bitcoin BitML contract
 -- advertisement and a Dogecoin BitML contract advertisement.
 compile :: BitMLx.TimedPreconditions -> BitMLx.Contract -> Either CompilationError (BitML.ContractAdvertisement BCoins, BitML.ContractAdvertisement DCoins)
 compile timedPreconditions contract = do
+    assertWellFormed (BitMLx.ContractAdvertisement timedPreconditions contract)
     let btcSettings = bitcoinSettings timedPreconditions (Left contract)
         dogeSettings = dogecoinSettings timedPreconditions (Left contract)
     bitcoinContract <- compileC btcSettings contract

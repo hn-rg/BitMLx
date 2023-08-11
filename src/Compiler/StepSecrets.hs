@@ -18,7 +18,7 @@ import qualified Data.Map.Strict as Map
 
 import Coins (Coins)
 import Syntax.Common (NodeLabel, P (pname), SName, emptyLabel)
-import Syntax.BitMLx (Contract(PriorityChoice, TimedPriorityChoice, Withdraw, WithdrawAll), GuardedContract (WithdrawD, Split, WithdrawAllD))
+import Syntax.BitMLx (Contract(PriorityChoice, Withdraw, WithdrawAll), GuardedContract (WithdrawD, Split, WithdrawAllD))
 import qualified Syntax.BitMLx as BitMLx
 import qualified Syntax.BitML as BitML
 import qualified Compiler.Auxiliary as Auxiliary
@@ -40,9 +40,6 @@ generateStepSecretsMap participants contract =
 -- Refer to module documentation for explanation of why this is needed.
 stepSecretsC :: [P] -> NodeLabel -> BitMLx.Contract -> [(NodeLabel, [(P, SName)])]
 stepSecretsC participants currentLabel@(moves, splits) (PriorityChoice d c) =
-    stepSecretsD participants (moves ++ "L", splits) d
-    ++ stepSecretsC participants (moves ++ "R", splits) c
-stepSecretsC participants currentLabel@(moves, splits) (TimedPriorityChoice t d c) =
     stepSecretsD participants (moves ++ "L", splits) d
     ++ stepSecretsC participants (moves ++ "R", splits) c
 stepSecretsC participants currentLabel@(moves, splits) (Withdraw _) = []
