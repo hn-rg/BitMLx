@@ -38,6 +38,18 @@ listEither (Right x : xs) =
         Left e -> Left e
         Right ys -> Right (x : ys)
 
+-- | Auxiliary function to check for existance of an error.
+assertList :: [Either e ()] -> Either e ()
+assertList [] = Right ()
+assertList (Left e : _) = Left e
+assertList (_ : xs) = assertList xs
+
+-- | Auxiliary function that returns error when condition is not met.
+assertCondition :: Bool -> e -> Either e ()
+assertCondition bool error =
+    if bool then Right () else Left error
+
+
 tupleEither :: (Either e a, b) -> Either e (a, b)
 tupleEither (Left err, y) = Left err
 tupleEither (Right x, y) = Right (x, y)

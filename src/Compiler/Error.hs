@@ -9,7 +9,7 @@ import qualified Syntax.BitMLx as BitMLx
 
 -- | Different kind of errors that the compiler can output.
 data CompilationError =
-    -- Withdraw balances don't add up to total contract Balance.
+    -- Withdraw balances don't add up to total contract Balance or participant not in preconditions.
     InconsistentWithdraw
     -- Split balances don't add up to total contract Balance.
     | InconsistentSplit

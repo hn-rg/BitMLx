@@ -23,8 +23,8 @@ tests = testGroup "All tests"
   , testWithdraw
   , testManyParticipantsWithdraw
   , testManyParticipantsPriorityChoice
-  -- , inconsistentWithdrawTests
-  -- , inconsistentSplitTests
-  -- , uncommitedSecretTest
-  -- , noDepositTests
+  , inconsistentWithdrawTests
+  , inconsistentSplitTests
+  , uncommitedSecretTest
+  , noDepositTests
   ]
