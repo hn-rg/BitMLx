@@ -1,5 +1,5 @@
 {-# LANGUAGE RankNTypes #-}
-module Compiler.Settings (CompilerSettings(..), bitcoinSettings, dogecoinSettings) where
+module Compiler.Settings (CompilerSettings(..), bitcoinSettings, dogecoinSettings, participantsFromPreconditions, secretsFromPreconditions, balanceFromPreconditions) where
 
 import Data.Map.Strict (Map, fromList, empty, insert)
 
@@ -83,6 +83,14 @@ participantsFromPreconditions preconditions =
         getParticipant (BitMLx.Deposit p _ _) = [p]
         getParticipant _notCollateral = []
     in concatMap getParticipant preconditions
+
+-- | Extract a list of the contract's secrets given it's preconditions.
+secretsFromPreconditions :: [BitMLx.Precondition] -> [SName]
+secretsFromPreconditions preconditions =
+    let
+        getSecret (BitMLx.Secret _ s _) = [s]
+        getSecret _notSecret = []
+    in concatMap getSecret preconditions
 
 -- | Calculate the contract's balance given it's preconditions and a target blockchain.
 balanceFromPreconditions :: Coins a => ((BCoins, DCoins) -> a) -> [BitMLx.Precondition] -> a
