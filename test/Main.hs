@@ -7,6 +7,9 @@ import TestPriorityChoice.Test (testPriorityChoice)
 import TestWithdrawD.Test (testWithdrawD)
 import TestManyParticipantsWithdraw.Test (testManyParticipantsWithdraw)
 import TestManyParticipantsPriorityChoice.Test (testManyParticipantsPriorityChoice)
+import TestAuthorize.Test (testAuthorize)
+import TestReveal.Test (testReveal)
+import TestRevealIf.Test (testRevealIf)
 import WellFormedFails.InconsistentWithdraw (inconsistentWithdrawTests)
 import WellFormedFails.InconsistentSplit (inconsistentSplitTests)
 import WellFormedFails.UncommitedSecret (uncommitedSecretTest)
@@ -23,6 +26,9 @@ tests = testGroup "All tests"
   , testWithdraw
   , testManyParticipantsWithdraw
   , testManyParticipantsPriorityChoice
+  , testAuthorize
+  , testReveal
+  , testRevealIf
   , inconsistentWithdrawTests
   , inconsistentSplitTests
   , uncommitedSecretTest

@@ -10,11 +10,11 @@ import Pretty ( prettyprintNL )
 import Syntax.BitML (ContractAdvertisement(..))
 
 import Examples.SimpleExchange
-    ( exampleName, participants, preconditions, contract )
+    ( exampleName, participants, sourceAdvertisement)
 
 main :: IO ()
 main = do
-    case compile preconditions contract of
+    case compile sourceAdvertisement of
         Right (ContractAdvertisement (bitcoinPreconditions, bitcoinContract), ContractAdvertisement (dogecoinPreconditions, dogecoinContract)) -> do
             let            
                 bitcoinOutPath = "output/" ++ exampleName ++ "_bitcoin.rkt"

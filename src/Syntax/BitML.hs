@@ -44,4 +44,9 @@ data GuardedContract c =
 (!) :: Coins c => P -> c -> DepositId -> Precondition c
 (p ! v) x = Deposit p v x
 
+-- | Shorthand operator for Authorizations.
+infix 3 &:
+(&:) :: Coins c => [P] -> GuardedContract c -> GuardedContract c
+(&:) = Auth 
+
 newtype ContractAdvertisement c = ContractAdvertisement ([Precondition c], Contract c)

@@ -6,7 +6,7 @@ import Test.Tasty.HUnit ( testCase, (@?=), testCaseSteps, assertFailure )
 
 import Coins (BCoins(..), DCoins(..))
 import Syntax.Common (P(..))
-import Syntax.BitMLx (ContractAdvertisement(ContractAdvertisement), TimedPreconditions(TimedPreconditions), Contract(Withdraw), (!), GuardedContract (WithdrawD), (+>), (#:))
+import Syntax.BitMLx (ContractAdvertisement(ContractAdvertisement), TimedPreconditions(TimedPreconditions), Contract(Withdraw), (!), GuardedContract (WithdrawD), (+>), (&:))
 import Compiler.WellFormed (assertWellFormed)
 import Compiler.Error (CompilationError(InconsistentWithdraw, NoDeposit))
 import qualified Compiler.Error as Test.WellFormedFails
@@ -40,7 +40,7 @@ noDeposit2 = ContractAdvertisement
         ]
     )
     (
-        [pC] #: WithdrawD [
+        [pC] &: WithdrawD [
             ((2, 1), pA),
             ((0, 1), pB)
         ] 

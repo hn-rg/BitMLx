@@ -30,3 +30,7 @@ contract =
         ((1, 0), pA),
         ((0, 1), pB)
     ]
+
+
+sourceAdvertisement :: ContractAdvertisement
+sourceAdvertisement = ContractAdvertisement preconditions contract

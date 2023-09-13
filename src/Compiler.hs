@@ -21,8 +21,8 @@ import Compiler.WellFormed ( assertWellFormed )
 
 -- | Given a BitMLx contract advertisement, compiles it to a Bitcoin BitML contract
 -- advertisement and a Dogecoin BitML contract advertisement.
-compile :: BitMLx.TimedPreconditions -> BitMLx.Contract -> Either CompilationError (BitML.ContractAdvertisement BCoins, BitML.ContractAdvertisement DCoins)
-compile timedPreconditions contract = do
+compile :: BitMLx.ContractAdvertisement -> Either CompilationError (BitML.ContractAdvertisement BCoins, BitML.ContractAdvertisement DCoins)
+compile (BitMLx.ContractAdvertisement timedPreconditions contract) = do
     assertWellFormed (BitMLx.ContractAdvertisement timedPreconditions contract)
     let btcSettings = bitcoinSettings timedPreconditions (Left contract)
         dogeSettings = dogecoinSettings timedPreconditions (Left contract)

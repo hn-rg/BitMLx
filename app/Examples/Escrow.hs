@@ -2,7 +2,6 @@ module Examples.Escrow where
 
 import Syntax.Common ( P(..), Pred (PEq, PAnd, PBtwn, PNeq), E (ELength, EInt) )
 import Syntax.BitMLx
-import Data.Ratio ((%))
 import Coins
 
 exampleName :: [Char]
@@ -23,15 +22,19 @@ preconditions = TimedPreconditions 1 10 [
 
 contract :: Contract
 contract =
-    [pA] #: WithdrawAllD pB
-    +> [pB] #: WithdrawAllD pA
-    +> [pA] #: resolve (1, 1) (9, 9)
-    +> [pB] #: resolve (1, 1) (9, 9)
+    [pA] &: WithdrawAllD pB
+    +> [pB] &: WithdrawAllD pA
+    +> [pA] &: resolve (1, 1) (9, 9)
+    +> [pB] &: resolve (1, 1) (9, 9)
     +> WithdrawAll pB
 
 resolve :: (BCoins, DCoins) -> (BCoins, DCoins) -> GuardedContract
 resolve v v' =
     Split [
         (v, WithdrawAll pM),
-        (v', ([pM] #: WithdrawAllD pA) +> WithdrawAll pB) 
+        (v', ([pM] &: WithdrawAllD pA) +> WithdrawAll pB) 
     ]
+
+
+sourceAdvertisement :: ContractAdvertisement
+sourceAdvertisement = ContractAdvertisement preconditions contract

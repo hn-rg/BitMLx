@@ -21,11 +21,14 @@ library
     Syntax.BitMLx
     Syntax.Common
     Compiler
+    Compiler.Authorize
     Compiler.Auxiliary
+    Compiler.Common
     Compiler.Contract
     Compiler.Error
     Compiler.Preconditions
     Compiler.PriorityChoice
+    Compiler.Reveal
     Compiler.Settings
     Compiler.StepSecrets
     Compiler.Split
@@ -66,6 +69,18 @@ test-suite bitmlx-test
     TestWithdraw.Bitcoin
     TestWithdraw.Dogecoin
     TestWithdraw.Test
+    TestAuthorize.BitMLx
+    TestAuthorize.Bitcoin
+    TestAuthorize.Dogecoin
+    TestAuthorize.Test
+    TestReveal.BitMLx
+    TestReveal.Bitcoin
+    TestReveal.Dogecoin
+    TestReveal.Test
+    TestRevealIf.BitMLx
+    TestRevealIf.Bitcoin
+    TestRevealIf.Dogecoin
+    TestRevealIf.Test
     TestSplit.BitMLx
     TestSplit.Bitcoin
     TestSplit.Dogecoin

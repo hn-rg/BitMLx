@@ -1,13 +1,12 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE NamedFieldPuns #-}
 module Compiler.Withdraw where
 
-import Data.Map (elems)
-import Data.List (delete)
 
 import Coins ( Coins, BCoins, DCoins )
 import Syntax.Common ( P )
 import Syntax.BitML (GuardedContract(Withdraw, Split), Contract)
-import Compiler.Auxiliary (eitherLookup, revealAny, listEither, tupleEither)
+import Compiler.Auxiliary (eitherLookup, listEither, tupleEither)
+import Compiler.Common (syncStepWrapper)
 import Compiler.Settings ( CompilerSettings(..) )
 import Compiler.Error (CompilationError (StepSecretsNotFoundForNode))
 
@@ -17,7 +16,7 @@ import Compiler.Error (CompilationError (StepSecretsNotFoundForNode))
 --   where they get the contract's balance + their collateral.
 -- - For each other participant, a withdraw of their collateral.
 compileWithdrawC :: Coins c => CompilerSettings c -> [((BCoins, DCoins), P)] -> Either CompilationError (Contract c)
-compileWithdrawC settings@CompilerSettings{..} fundsMapping =
+compileWithdrawC settings@CompilerSettings{participants, collateral, coinChooser} fundsMapping =
     if length fundsMapping' == 1
     then compileWithdrawAllC settings ((fst . head) fundsMapping')
     else let splitBranches = [(getWithdrawAmount p , [Withdraw p]) | p <- participants]
@@ -38,13 +37,12 @@ compileWithdrawC settings@CompilerSettings{..} fundsMapping =
 -- This step secret can be used on the containing priority choice to punish them
 -- if they attempt an asynchronous execution.
 compileWithdrawD :: Coins c => CompilerSettings c -> [((BCoins, DCoins), P)] -> Either CompilationError (Contract c)
-compileWithdrawD settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel), ..} fundsMapping = do
-    thisChainStepSecrets <- eitherLookup (choiceLabel, splitLabel) stepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
+compileWithdrawD settings@CompilerSettings{currentLabel, stepSecretsByLabel} fundsMapping = do
     executeWithdraw <- compileWithdrawC settings fundsMapping
-    Right $ revealAny (elems thisChainStepSecrets) executeWithdraw
+    syncStepWrapper settings executeWithdraw
 
 compileWithdrawAllC :: Coins c => CompilerSettings c -> P -> Either CompilationError (Contract c)
-compileWithdrawAllC settings@CompilerSettings{..} p = -- compileWithdrawC settings [(balance settings, p)]
+compileWithdrawAllC settings@CompilerSettings{participants, balance, collateral} p = -- compileWithdrawC settings [(balance settings, p)]
     if length participants == 2 then
         Right [Withdraw p]
     else
@@ -56,7 +54,6 @@ compileWithdrawAllC settings@CompilerSettings{..} p = -- compileWithdrawC settin
             else collateral
 
 compileWithdrawAllD :: Coins c => CompilerSettings c -> P -> Either CompilationError (Contract c)
-compileWithdrawAllD settings@CompilerSettings{currentLabel = (choiceLabel, splitLabel), ..} p = do
-    thisChainStepSecrets <- eitherLookup (choiceLabel, splitLabel) stepSecretsByLabel (StepSecretsNotFoundForNode (choiceLabel, splitLabel))
+compileWithdrawAllD settings p = do
     executeWithdraw <- compileWithdrawAllC settings p
-    Right $ revealAny (elems thisChainStepSecrets) executeWithdraw
+    syncStepWrapper settings executeWithdraw

@@ -38,3 +38,7 @@ contract =
             (EInt 0) (EInt 1))
         (WithdrawAll pB) 
     +> WithdrawAll pA
+
+
+sourceAdvertisement :: ContractAdvertisement
+sourceAdvertisement = ContractAdvertisement preconditions contract

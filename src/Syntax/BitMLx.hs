@@ -77,9 +77,9 @@ data ContractAdvertisement =
 (p ! (bv, dv)) z = Deposit p (bv, dv) z
 
 -- | Shorthand operator for Authorizations.
-infix 3 #:
-(#:) :: [P] -> GuardedContract -> GuardedContract
-(#:) = Auth 
+infix 3 &:
+(&:) :: [P] -> GuardedContract -> GuardedContract
+(&:) = Auth 
 
 -- | Shorthand operator for priority choices.
 infixr 2 +>
