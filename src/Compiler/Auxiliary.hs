@@ -2,23 +2,6 @@ module Compiler.Auxiliary where
 
 import Prelude hiding (lookup)
 import Data.Map.Strict (elems, lookup, Map)
-import Data.Ratio (numerator, denominator)
-
-import Coins (Coins)
-import Syntax.Common (SName, P)
-import qualified Syntax.BitML as BitML
-import qualified Syntax.BitMLx as BitMLx
-
--- | Small cheat to convert a guarded contract into a contract.
--- Notice that the price of using tau is that it introduces an
--- extra transaction, with it's associated transaction fees.
-tau :: BitML.Contract c -> BitML.GuardedContract c
-tau = BitML.Reveal []
-
--- | An alternative reveal construction that works by requiring any of a list of secrets
--- to be revealed instead of all of them.
-revealAny :: Coins c =>  [SName] -> BitML.Contract c -> BitML.Contract c
-revealAny secrets subcontract =  [BitML.Reveal [s] subcontract | s <- secrets]
 
 -- | Auxiliary function to convert a lookup from Maybe to Either
 -- takes as argument the error to throw if the lookup

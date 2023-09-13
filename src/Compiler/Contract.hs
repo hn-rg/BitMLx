@@ -12,13 +12,15 @@ import Coins ( Coins, BCoins, DCoins)
 import Syntax.Common ( Time, SName, P )
 import qualified Syntax.BitML as BitML
 import qualified Syntax.BitMLx as BitMLx
+import {-# SOURCE #-} Compiler.Authorize (compileAuthorize)
 import Compiler.Error ( CompilationError(..) )
 import Compiler.Withdraw ( compileWithdrawC, compileWithdrawD, compileWithdrawAllC, compileWithdrawAllD )
 import Compiler.Preconditions ( compileG )
+import {-# SOURCE #-} Compiler.Reveal (compileReveal, compileRevealIf)
 import Compiler.Settings (CompilerSettings)
 import {-# SOURCE #-} Compiler.PriorityChoice (compilePriorityChoice)
 import {-# SOURCE #-} Compiler.Split (compileSplit)
-import Syntax.BitMLx (Contract(PriorityChoice, Withdraw, WithdrawAll), GuardedContract (WithdrawD, Split, WithdrawAllD))
+import Syntax.BitMLx (Contract(PriorityChoice, Withdraw, WithdrawAll), GuardedContract (WithdrawD, Split, WithdrawAllD, Auth, Reveal, RevealIf))
 
 
 -- | Given a BitMLx contract, compile it to a contract on the target blockchain,
@@ -36,4 +38,6 @@ compileD settings d = case d of
     WithdrawD fundsMapping -> compileWithdrawD settings fundsMapping
     WithdrawAllD p -> compileWithdrawAllD settings p
     Split subcontracts -> compileSplit settings subcontracts
-    _notImplementedYet -> Left NotImplemented
+    Auth signers guardedContract -> compileAuthorize settings signers guardedContract
+    Reveal secrets contract -> compileReveal settings secrets contract
+    RevealIf secrets predicate contract -> compileRevealIf settings secrets predicate contract

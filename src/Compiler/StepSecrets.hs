@@ -18,7 +18,7 @@ import qualified Data.Map.Strict as Map
 
 import Coins (Coins)
 import Syntax.Common (NodeLabel, P (pname), SName, emptyLabel)
-import Syntax.BitMLx (Contract(PriorityChoice, Withdraw, WithdrawAll), GuardedContract (WithdrawD, Split, WithdrawAllD))
+import Syntax.BitMLx (Contract(PriorityChoice, Withdraw, WithdrawAll), GuardedContract (WithdrawD, Split, WithdrawAllD, Auth, Reveal, RevealIf))
 import qualified Syntax.BitMLx as BitMLx
 import qualified Syntax.BitML as BitML
 import qualified Compiler.Auxiliary as Auxiliary
@@ -39,23 +39,33 @@ generateStepSecretsMap participants contract =
 -- | Generate a list of all needed step secrets for a contract.
 -- Refer to module documentation for explanation of why this is needed.
 stepSecretsC :: [P] -> NodeLabel -> BitMLx.Contract -> [(NodeLabel, [(P, SName)])]
-stepSecretsC participants currentLabel@(moves, splits) (PriorityChoice d c) =
-    stepSecretsD participants (moves ++ "L", splits) d
-    ++ stepSecretsC participants (moves ++ "R", splits) c
-stepSecretsC participants currentLabel@(moves, splits) (Withdraw _) = []
-stepSecretsC participants currentLabel@(moves, splits) (WithdrawAll _) = []
+stepSecretsC participants currentLabel@(moves, splits) contract =
+    case contract of
+        (PriorityChoice d c) ->
+            stepSecretsD participants (moves ++ "L", splits) d
+            ++ stepSecretsC participants (moves ++ "R", splits) c
+        (Withdraw _) -> []
+        (WithdrawAll _) -> []
 
 -- | Generate a list of all needed step secrets for a contract.
 -- Refer to module documentation for explanation of why this is needed.
 stepSecretsD :: [P] -> NodeLabel -> BitMLx.GuardedContract -> [(NodeLabel, [(P, SName)])]
-stepSecretsD participants currentLabel@(moves, splits) (WithdrawD _) =
-    [(currentLabel, [(p, stepSecretName currentLabel p) | p <- participants])]
-stepSecretsD participants currentLabel@(moves, splits) (WithdrawAllD _) =
-    [(currentLabel, [(p, stepSecretName currentLabel p) | p <- participants])]
-stepSecretsD participants currentLabel@(moves, splits) (Split branches) =
-    (currentLabel, [(p, stepSecretName currentLabel p) | p <- participants])
-    : concat [stepSecretsC participants (moves, splits ++ show index) branch | (index, (_value, branch)) <- enumerate branches]
-stepSecretsD _ _ _otherContract = []
+stepSecretsD participants currentLabel@(moves, splits) guardedContract =
+    case guardedContract of
+        (WithdrawD _) -> [onThisNode]
+        (WithdrawAllD _) -> [onThisNode]
+        (Split branches) -> onThisNode : onAllBranches branches
+        (Auth signers guardedContract) -> onFollowUpGuardedContract guardedContract
+        (Reveal _ contract) -> onThisNode : onFollowUpContract contract
+        (RevealIf _ _ contract) -> onThisNode : onFollowUpContract contract
+    where
+        onThisNode = (currentLabel, [(p, stepSecretName currentLabel p) | p <- participants])
+        onAllBranches bs = concat [
+            stepSecretsC participants (moves, splits ++ show index) branch
+            | (index, (_value, branch)) <- enumerate bs
+            ]
+        onFollowUpContract c = stepSecretsC participants currentLabel c
+        onFollowUpGuardedContract d = stepSecretsD participants currentLabel d
 
 -- | Generate a unique name for each step secret.
 stepSecretName :: NodeLabel -> P -> String

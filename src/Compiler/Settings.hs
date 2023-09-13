@@ -20,11 +20,6 @@ data CompilerSettings c = CompilerSettings {
     , balance :: c
     -- | How much money each participant locked as collateral.
     , collateral :: c
-    -- | Sum of balance and all collaterals. Because of the general Coins type,
-    -- making this sum requires many ugly type conversions (see below). Precalculating
-    -- this here increases code readability in the implementation of statements like
-    -- Split, which have a high enough cognitive load already.
-    , totalFunds :: c
     -- | Step secrets used in this blockchain (the one we are compiling now)
     -- when compiling a priority choice.
     , stepSecretsByLabel :: Map NodeLabel (Map P SName)
@@ -49,7 +44,6 @@ bitcoinSettings (TimedPreconditions startingTime elapseTime preconditions) contr
     participants = participantsFromPreconditions preconditions
     , balance = balanceFromPreconditions coinChooser preconditions
     , collateral = collateralFromPreconditions coinChooser preconditions
-    , totalFunds = totalFundsFromPreconditions coinChooser preconditions
     , stepSecretsByLabel = generateStepSecretsMap participants contract
     , currentTime = startingTime
     , elapseTime = elapseTime
@@ -66,7 +60,6 @@ dogecoinSettings (TimedPreconditions startingTime elapseTime preconditions) cont
     participants = participantsFromPreconditions preconditions
     , balance = balanceFromPreconditions coinChooser preconditions
     , collateral = collateralFromPreconditions coinChooser preconditions
-    , totalFunds = totalFundsFromPreconditions coinChooser preconditions
     , stepSecretsByLabel = generateStepSecretsMap participants contract
     , currentTime = startingTime
     , elapseTime = elapseTime
@@ -107,11 +100,3 @@ collateralFromPreconditions coinChooser preconditions = fromInteger (toInteger (
     where
         n = length (participantsFromPreconditions preconditions)
         balance = balanceFromPreconditions coinChooser preconditions
-
--- | The total funds (balance + all collaterals) of a contract on a given blockchain.
-totalFundsFromPreconditions :: Coins a => ((BCoins, DCoins) -> a) -> [BitMLx.Precondition] -> a
-totalFundsFromPreconditions coinChooser preconditions = balance + fromInteger (toInteger (n * fromInteger (toInteger collateral)))
-    where
-        n = length (participantsFromPreconditions preconditions)
-        balance = balanceFromPreconditions coinChooser preconditions
-        collateral = collateralFromPreconditions coinChooser preconditions

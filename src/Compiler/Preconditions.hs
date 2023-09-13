@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE NamedFieldPuns #-}
 module Compiler.Preconditions where
 
@@ -26,7 +24,7 @@ compileG _ _ (BitMLx.Secret p n h) = (BitML.Secret p n h, BitML.Secret p n h)
 
 -- | Extra secrets added to synchronize priority choices. 
 stepSecretPreconditionsFromSettings :: Coins c => CompilerSettings c -> [BitML.Precondition c]
-stepSecretPreconditionsFromSettings CompilerSettings{stepSecretsByLabel, ..} =
+stepSecretPreconditionsFromSettings CompilerSettings{stepSecretsByLabel} =
     concat [
         [
             BitML.Secret participant secretName stepSecretHashPlaceholder

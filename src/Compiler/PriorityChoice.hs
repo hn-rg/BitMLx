@@ -12,7 +12,8 @@ import qualified Syntax.BitMLx as BitMLx
 import {-# SOURCE #-} Compiler.Contract (compileC, compileD)
 import Compiler.Error ( CompilationError(..) )
 import Compiler.Settings ( CompilerSettings (..) )
-import Compiler.Auxiliary (eitherLookup, tau, revealAny, listEither)
+import Compiler.Auxiliary (eitherLookup, listEither)
+import Compiler.Common (tau)
 
 
 -- | A priority choice between a guarded contract D and a contract C is compiled to a choice between:

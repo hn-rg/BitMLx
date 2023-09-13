@@ -1,16 +1,14 @@
-{-# LANGUAGE RecordWildCards #-}
 module Compiler.Split ( SplitBranch, compileSplit ) where
 
-import Data.Map (elems)
-import Data.Ratio (numerator, denominator)
 
 import qualified Syntax.BitML as BitML
 import qualified Syntax.BitMLx as BitMLx
-import {-# SOURCE #-} Compiler.Contract (compileC)
 import Coins (BCoins, DCoins, Coins)
-import Compiler.Error (CompilationError(..))
+import Compiler.Auxiliary (eitherLookup, listEither, enumerate)
+import Compiler.Common (syncStepWrapper)
+import {-# SOURCE #-} Compiler.Contract (compileC)
 import Compiler.Settings (CompilerSettings (..))
-import Compiler.Auxiliary (eitherLookup, revealAny, listEither, enumerate)
+import Compiler.Error (CompilationError(..))
 import Syntax.BitML (GuardedContract(Split))
 
 
@@ -30,12 +28,11 @@ type SplitBranch = ((BCoins, DCoins), BitMLx.Contract)
 compileSplit :: Coins c => CompilerSettings c -> [SplitBranch] -> Either CompilationError (BitML.Contract c)
 compileSplit settings branches = do
     let label = currentLabel settings
-    stepSecrets <- eitherLookup label (stepSecretsByLabel settings) (StepSecretsNotFoundForNode label)
     compiledBranches <- listEither [
         compileSplitBranch settings i branch
         | (i, branch) <- enumerate branches
         ]
-    Right $ revealAny (elems stepSecrets) [Split compiledBranches]
+    syncStepWrapper settings [Split compiledBranches]
 
 
 compileSplitBranch :: Coins c => CompilerSettings c -> Integer -> SplitBranch -> Either CompilationError (c, BitML.Contract c)
@@ -47,6 +44,6 @@ compileSplitBranch settings index branch = do
         totalFunds = balance + nParticipants * collateral
         (choiceLabel, splitLabel) = currentLabel settings
         newLabel = (choiceLabel, splitLabel ++ show index)
-        newSettings = settings{balance=balance, collateral=collateral, totalFunds=totalFunds, currentLabel=newLabel}
+        newSettings = settings{balance=balance, collateral=collateral, currentLabel=newLabel}
     compiledSubcontract <- compileC newSettings subcontract
     Right (totalFunds, compiledSubcontract)

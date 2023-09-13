@@ -32,3 +32,7 @@ contract =
     +> Reveal ["a"] (WithdrawAll pA)
     +> Reveal ["b"] (WithdrawAll pB)
     +> WithdrawAll pA
+
+
+sourceAdvertisement :: ContractAdvertisement
+sourceAdvertisement = ContractAdvertisement preconditions contract
