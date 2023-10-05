@@ -19,6 +19,8 @@ preconditions :: [Precondition BCoins]
 preconditions = [
     pA ! 1 $ "A_deposit_Bitcoin"
     , pB ! 1 $ "B_deposit_Bitcoin"
+    , Secret pA "StartSecret_A" "__HASH__PLACEHOLDER__"
+    , Secret pB "StartSecret_B" "__HASH__PLACEHOLDER__"
     ]
 
 contract :: Contract BCoins

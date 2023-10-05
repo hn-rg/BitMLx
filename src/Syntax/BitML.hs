@@ -49,4 +49,4 @@ infix 3 &:
 (&:) :: Coins c => [P] -> GuardedContract c -> GuardedContract c
 (&:) = Auth 
 
-newtype ContractAdvertisement c = ContractAdvertisement ([Precondition c], Contract c)
+data ContractAdvertisement c = ContractAdvertisement [Precondition c] (Contract c)

@@ -9,7 +9,7 @@ import Syntax.BitML ((&:), Contract)
 import Syntax.Common (P)
 import Coins (Coins)
 import Compiler.Settings (CompilerSettings (CompilerSettings, currentLabel, stepSecretsByLabel))
-import Compiler.Error (CompilationError (StepSecretsNotFoundForNode))
+import Compiler.Error (CompilationError)
 import Compiler.Auxiliary (eitherLookup)
 import Compiler.Contract (compileD)
 

@@ -27,6 +27,9 @@ preconditions = [
     , Secret pA "StepSecret_A__RL_" "__HASH__PLACEHOLDER__"
     , Secret pB "StepSecret_B__RL_" "__HASH__PLACEHOLDER__"
     , Secret pC "StepSecret_C__RL_" "__HASH__PLACEHOLDER__"
+    , Secret pA "StartSecret_A" "__HASH__PLACEHOLDER__"
+    , Secret pB "StartSecret_B" "__HASH__PLACEHOLDER__"
+    , Secret pC "StartSecret_C" "__HASH__PLACEHOLDER__"
     ]
 
 contract :: Contract BCoins

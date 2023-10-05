@@ -8,20 +8,20 @@ import qualified TestWithdraw.Bitcoin as Bitcoin
 import qualified TestWithdraw.Dogecoin as Dogecoin
 import Compiler.Preconditions (compilePreconditions)
 import Compiler.Contract (compileC)
-import Compiler.Settings ( bitcoinSettings, dogecoinSettings )
+import TestSettings ( bitcoinTestCompilerSettings, dogecoinTestCompilerSettings )
 
 
 testWithdraw :: TestTree
 testWithdraw = testCaseSteps "Compile a Withdraw contract" $ \step -> do
     step "Building settings..."
-    let bitcoinSettings' = bitcoinSettings BitMLx.preconditions (Left BitMLx.contract)
-    let dogecoinSettings' = dogecoinSettings BitMLx.preconditions (Left BitMLx.contract)
-
+    let bitcoinSettings' = bitcoinTestCompilerSettings BitMLx.preconditions (Left BitMLx.contract)
+    let dogecoinSettings' = dogecoinTestCompilerSettings BitMLx.preconditions (Left BitMLx.contract)
 
     step "Compiling preconditions..."
-    let (bitcoinResult, dogecoinResult) = compilePreconditions bitcoinSettings' dogecoinSettings' BitMLx.preconditions
-    bitcoinResult @?= Bitcoin.preconditions
-    dogecoinResult @?= Dogecoin.preconditions
+    let bitcoinPreconditions = compilePreconditions bitcoinSettings' BitMLx.preconditions
+    let dogecoinPreconditions = compilePreconditions dogecoinSettings' BitMLx.preconditions
+    bitcoinPreconditions @?= Bitcoin.preconditions
+    dogecoinPreconditions @?= Dogecoin.preconditions
 
     step "Compiling to Bitcoin BitML..."
     let bitcoinResult = compileC bitcoinSettings' BitMLx.contract

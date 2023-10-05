@@ -18,6 +18,8 @@ preconditions :: [Precondition DCoins]
 preconditions = [
     pA ! 1 $ "A_deposit_Dogecoin"
     , pB ! 1 $ "B_deposit_Dogecoin"
+    , Secret pA "StartSecret_A" "__HASH__PLACEHOLDER__"
+    , Secret pB "StartSecret_B" "__HASH__PLACEHOLDER__"
     ]
 
 contract :: Contract DCoins

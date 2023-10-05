@@ -8,20 +8,20 @@ import qualified TestSplit.Bitcoin as Bitcoin
 import qualified TestSplit.Dogecoin as Dogecoin
 import Compiler.Preconditions (compilePreconditions)
 import Compiler.Contract (compileD)
-import Compiler.Settings ( bitcoinSettings, dogecoinSettings )
+import TestSettings ( bitcoinTestCompilerSettings, dogecoinTestCompilerSettings )
 
 
 testSplit :: TestTree
 testSplit = testCaseSteps "Compile a Split guarded contract" $ \step -> do
     step "Building settings..."
-    let bitcoinSettings' = bitcoinSettings BitMLx.preconditions (Right BitMLx.contract)
-    let dogecoinSettings' = dogecoinSettings BitMLx.preconditions (Right BitMLx.contract)
-
+    let bitcoinSettings' = bitcoinTestCompilerSettings BitMLx.preconditions (Right BitMLx.contract)
+    let dogecoinSettings' = dogecoinTestCompilerSettings BitMLx.preconditions (Right BitMLx.contract)
 
     step "Compiling preconditions..."
-    let (bitcoinResult, dogecoinResult) = compilePreconditions bitcoinSettings' dogecoinSettings' BitMLx.preconditions
-    bitcoinResult @?= Bitcoin.preconditions
-    dogecoinResult @?= Dogecoin.preconditions
+    let bitcoinPreconditions = compilePreconditions bitcoinSettings' BitMLx.preconditions
+    let dogecoinPreconditions = compilePreconditions dogecoinSettings' BitMLx.preconditions
+    bitcoinPreconditions @?= Bitcoin.preconditions
+    dogecoinPreconditions @?= Dogecoin.preconditions
 
     step "Compiling to Bitcoin BitML..."
     let bitcoinResult = compileD bitcoinSettings' BitMLx.contract

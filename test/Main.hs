@@ -14,6 +14,8 @@ import WellFormedFails.InconsistentWithdraw (inconsistentWithdrawTests)
 import WellFormedFails.InconsistentSplit (inconsistentSplitTests)
 import WellFormedFails.UncommitedSecret (uncommitedSecretTest)
 import WellFormedFails.NoDeposit (noDepositTests)
+import TestStipulation (testContractStipulation)
+import TestAdvertisement.Test (testAdvertisement)
 
 main :: IO ()
 main = defaultMain tests
@@ -29,6 +31,8 @@ tests = testGroup "All tests"
   , testAuthorize
   , testReveal
   , testRevealIf
+  , testContractStipulation
+  , testAdvertisement
   , inconsistentWithdrawTests
   , inconsistentSplitTests
   , uncommitedSecretTest

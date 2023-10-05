@@ -2,22 +2,22 @@
 Module      : Compiler.StepSecrets
 Description : Step secrets generation
 
-Step secrets are the crucial part of the BItMLx compilation.
+Step secrets are a crucial part of the BitMLx compilation.
 
 Each node on the BitMLx syntax tree is identified with a unique label,
 and each participant will commit on both BitML contracts a secret
-for each label. This secrets serves as proof that a participant
+for each label. This secrets serve as proof that a participant
 is actively taking a left choice on a particular execution step.
 
 The functions here traverse the tree and compile a map of all
-step secret, conveniently indexed by node label and participant.
+step secrets, conveniently indexed by node label and participant.
 -}
-module Compiler.StepSecrets (generateStepSecretsMap) where
+module Compiler.StepSecrets (generateStepSecretsMap, stepSecretsC, stepSecretsD, stepSecretName) where
 
 import qualified Data.Map.Strict as Map
 
 import Coins (Coins)
-import Syntax.Common (NodeLabel, P (pname), SName, emptyLabel)
+import Syntax.Common (NodeLabel, P (pname), SName)
 import Syntax.BitMLx (Contract(PriorityChoice, Withdraw, WithdrawAll), GuardedContract (WithdrawD, Split, WithdrawAllD, Auth, Reveal, RevealIf))
 import qualified Syntax.BitMLx as BitMLx
 import qualified Syntax.BitML as BitML
@@ -27,14 +27,14 @@ import Compiler.Auxiliary (enumerate)
 -- | Haskell magic to convert the step secrets to a format easy to index first by
 -- node and then by participant.
 -- The heavy-lifting is done b 
-generateStepSecretsMap :: [P] -> Either BitMLx.Contract BitMLx.GuardedContract -> Map.Map NodeLabel (Map.Map P SName)
+generateStepSecretsMap :: [P] -> BitMLx.Contract -> Map.Map NodeLabel (Map.Map P SName)
 generateStepSecretsMap participants contract =
-    let stepSecretTuples = case contract of
-            Left c -> stepSecretsC participants emptyLabel c
-            Right d -> stepSecretsD participants emptyLabel d
+    let initialLabel  = ("L", "")
+        onStipulation = (initialLabel, [(p, stepSecretName initialLabel p) | p <- participants])
+        onContract = stepSecretsC participants initialLabel contract
     in Map.fromListWith
         (Map.unionWith (++))
-        [(l, Map.singleton p s) | (l, byParticipant) <- stepSecretTuples, (p, s) <- byParticipant]
+        [(l, Map.singleton p s) | (l, byParticipant) <- onStipulation : onContract, (p, s) <- byParticipant]
 
 -- | Generate a list of all needed step secrets for a contract.
 -- Refer to module documentation for explanation of why this is needed.
