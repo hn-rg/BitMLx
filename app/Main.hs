@@ -5,17 +5,17 @@ import Prettyprinter.Internal
     ( layoutPretty, defaultLayoutOptions )
 import Data.Text.Lazy.IO as TL ( writeFile )
 
-import Compiler ( compile )
 import Pretty ( prettyprintNL )
-import Syntax.BitML (ContractAdvertisement(..))
+import Syntax.BitML as BitML
+import Syntax.BitMLx as BitMLx
 
-import Examples.SimpleExchange
+import Examples.Escrow
     ( exampleName, participants, sourceAdvertisement)
+import Compiler ( compileBitMLx )
 
 main :: IO ()
-main = do
-    case compile sourceAdvertisement of
-        Right (ContractAdvertisement (bitcoinPreconditions, bitcoinContract), ContractAdvertisement (dogecoinPreconditions, dogecoinContract)) -> do
+main = case compileBitMLx sourceAdvertisement of
+        (Right (BitML.ContractAdvertisement bitcoinPreconditions bitcoinContract, BitML.ContractAdvertisement dogecoinPreconditions dogecoinContract)) -> do
             let            
                 bitcoinOutPath = "output/" ++ exampleName ++ "_bitcoin.rkt"
                 dogecoinOutPath = "output/" ++ exampleName ++ "_dogecoin.rkt"
@@ -26,4 +26,4 @@ main = do
                 renderDogecoin = renderLazy (layoutPretty defaultLayoutOptions dogecoinDoc)
             TL.writeFile bitcoinOutPath renderBitcoin
             TL.writeFile dogecoinOutPath renderDogecoin
-        Left compilationError -> print $ show compilationError
+        (Left compilationError) -> print $ show compilationError

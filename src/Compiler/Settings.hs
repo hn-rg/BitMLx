@@ -1,27 +1,31 @@
 {-# LANGUAGE RankNTypes #-}
-module Compiler.Settings (CompilerSettings(..), bitcoinSettings, dogecoinSettings, participantsFromPreconditions, secretsFromPreconditions, balanceFromPreconditions) where
+module Compiler.Settings where
 
 import Data.Map.Strict (Map, fromList, empty, insert)
 
 import Coins (BCoins (BCoins), DCoins (DCoins), Coins)
-import Syntax.Common (Time, SName, P, NodeLabel, emptyLabel)
+import Syntax.Common (Time, SName, P (pname), NodeLabel, emptyLabel)
 import qualified Syntax.BitMLx as BitMLx
 import qualified Data.Map as Map
 import Compiler.StepSecrets (generateStepSecretsMap)
-import Syntax.BitMLx (TimedPreconditions(..))
+import Syntax.BitMLx (TimedPreconditions(..), ContractAdvertisement (ContractAdvertisement))
 
 -- | Compiler settings for a target blockchain.
 data CompilerSettings c = CompilerSettings {
+    -- | Target blockchain name. Useful when generating deposit identifiers.
+    targetBlockchain :: String
     -- | The participants of the contract,
     -- defined as everyone who has locked collateral into
     -- the contract.
-    participants :: [P]
+    , participants :: [P]
     -- | The sum of all deposits.
     , balance :: c
     -- | How much money each participant locked as collateral.
     , collateral :: c
-    -- | Step secrets used in this blockchain (the one we are compiling now)
-    -- when compiling a priority choice.
+    -- | Secrets that all participants will reveal to authorize
+    -- the start of a contract.
+    , startSecrets :: Map P SName
+    -- | Step secrets used synchronous execution of priority choices.
     , stepSecretsByLabel :: Map NodeLabel (Map P SName)
     -- | A security parameter that establishes how much exclusivity time we
     -- give to fases of the stipulation protocol and to actions before skipping them.
@@ -39,33 +43,41 @@ data CompilerSettings c = CompilerSettings {
 }
 
 -- | Compiler settings to produce the Bitcoin BitML contract, given the contract preconditions.
-bitcoinSettings :: BitMLx.TimedPreconditions -> Either BitMLx.Contract BitMLx.GuardedContract -> CompilerSettings BCoins
-bitcoinSettings (TimedPreconditions startingTime elapseTime preconditions) contract = CompilerSettings {
-    participants = participantsFromPreconditions preconditions
+bitcoinSettings :: ContractAdvertisement -> CompilerSettings BCoins
+bitcoinSettings advertisement = CompilerSettings {
+    targetBlockchain = "Bitcoin"
+    , participants = participantsFromPreconditions preconditions
     , balance = balanceFromPreconditions coinChooser preconditions
     , collateral = collateralFromPreconditions coinChooser preconditions
     , stepSecretsByLabel = generateStepSecretsMap participants contract
+    , startSecrets = generateStartSecrets participants
     , currentTime = startingTime
     , elapseTime = elapseTime
     , currentLabel = emptyLabel
     , coinChooser = coinChooser
 } where
+    ContractAdvertisement timedPreconditions contract = advertisement
+    (TimedPreconditions startingTime elapseTime preconditions) = timedPreconditions
     participants = participantsFromPreconditions preconditions
     coinChooser = fst
 
 
 -- | Compiler settings to produce the Dogecoin BitML contract, given the contract preconditions.
-dogecoinSettings :: BitMLx.TimedPreconditions -> Either BitMLx.Contract BitMLx.GuardedContract -> CompilerSettings DCoins
-dogecoinSettings (TimedPreconditions startingTime elapseTime preconditions) contract = CompilerSettings {
-    participants = participantsFromPreconditions preconditions
+dogecoinSettings :: ContractAdvertisement -> CompilerSettings DCoins
+dogecoinSettings advertisement = CompilerSettings {
+    targetBlockchain = "Dogecoin"
+    , participants = participantsFromPreconditions preconditions
     , balance = balanceFromPreconditions coinChooser preconditions
     , collateral = collateralFromPreconditions coinChooser preconditions
     , stepSecretsByLabel = generateStepSecretsMap participants contract
+    , startSecrets = generateStartSecrets participants
     , currentTime = startingTime
     , elapseTime = elapseTime
     , currentLabel = emptyLabel
     , coinChooser = coinChooser
 } where
+    ContractAdvertisement timedPreconditions contract = advertisement
+    (TimedPreconditions startingTime elapseTime preconditions) = timedPreconditions
     participants = participantsFromPreconditions preconditions
     coinChooser = snd
 
@@ -100,3 +112,6 @@ collateralFromPreconditions coinChooser preconditions = fromInteger (toInteger (
     where
         n = length (participantsFromPreconditions preconditions)
         balance = balanceFromPreconditions coinChooser preconditions
+
+generateStartSecrets :: [P] -> Map P SName
+generateStartSecrets participants = fromList [(p, "StartSecret" ++ "_" ++ pname p) | p <- participants]

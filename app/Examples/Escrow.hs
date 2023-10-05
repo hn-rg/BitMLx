@@ -18,6 +18,7 @@ preconditions :: TimedPreconditions
 preconditions = TimedPreconditions 1 10 [
     pA ! (10, 10) $ "A_deposit"
     , pB ! (0, 0) $ "B_deposit"
+    , pM ! (0, 0) $ "M_deposit"
     ]
 
 contract :: Contract

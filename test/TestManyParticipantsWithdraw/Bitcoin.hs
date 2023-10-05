@@ -21,6 +21,9 @@ preconditions = [
     pA ! 7 $ "A_deposit_Bitcoin"
     , pB ! 8 $ "B_deposit_Bitcoin"
     , pC ! 9 $ "C_deposit_Bitcoin"
+    , Secret pA "StartSecret_A" "__HASH__PLACEHOLDER__"
+    , Secret pB "StartSecret_B" "__HASH__PLACEHOLDER__"
+    , Secret pC "StartSecret_C" "__HASH__PLACEHOLDER__"
     ]
 
 contract :: Contract BCoins
