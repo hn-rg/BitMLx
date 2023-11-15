@@ -35,10 +35,10 @@ Current unit tests have the following component:
 
 ## TODOs
 
-[] Change priority choices to use global time formulas and implement timed priority choice.
-[] Implement the stipulation protocol.
-[] Implement the `reveal` primitive.
-[] Implement the participant authorization (signature) primitive.
-[] Adapt Chrysa's more complex examples to the new syntax.
-[] (maybe) Write a well-formed checker to ensure that a contract is valid before compiling.
+[x] Change priority choices to use global time formulas and implement timed priority choice.
+[x] Implement the stipulation protocol.
+[x] Implement the `reveal` primitive.
+[x] Implement the participant authorization (signature) primitive.
+[x] Adapt Chrysa's more complex examples to the new syntax.
+[x] (maybe) Write a well-formed checker to ensure that a contract is valid before compiling.
 [] (maybe) Build an integration script to further compile outputs to bitcoin transactions using the existing BitML compiler.
