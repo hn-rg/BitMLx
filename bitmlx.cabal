@@ -53,6 +53,7 @@ executable bitmlx-exe
     Examples.Escrow
     Examples.MutualTC
     Examples.NaiveExchangeLottery
+    ExampleRunner
   build-depends:
       base >=4.7 && <5
     , bitmlx

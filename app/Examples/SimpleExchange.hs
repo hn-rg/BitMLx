@@ -4,6 +4,8 @@ import Syntax.Common ( P(..), Pred (PEq, PAnd, PBtwn, PNeq), E (ELength, EInt) )
 import Syntax.BitMLx
 import Data.Ratio ((%))
 
+import ExampleRunner (BitMLxExample(BitMLxExample))
+
 exampleName :: [Char]
 exampleName = "SimpleExchange"
 
@@ -34,3 +36,5 @@ contract =
 
 sourceAdvertisement :: ContractAdvertisement
 sourceAdvertisement = ContractAdvertisement preconditions contract
+
+example = BitMLxExample exampleName participants sourceAdvertisement

@@ -9,7 +9,7 @@
  (pre
   (deposit "A" 20 "A_deposit_Dogecoin")
   (deposit "B" 10 "B_deposit_Dogecoin")
-  (deposit "M" 10 "B_deposit_Dogecoin")
+  (deposit "M" 10 "M_deposit_Dogecoin")
   (secret "A" StepSecret_A__L_ "__HASH__PLACEHOLDER__")
   (secret "B" StepSecret_B__L_ "__HASH__PLACEHOLDER__")
   (secret "M" StepSecret_M__L_ "__HASH__PLACEHOLDER__")

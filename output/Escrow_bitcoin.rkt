@@ -9,7 +9,7 @@
  (pre
   (deposit "A" 20 "A_deposit_Bitcoin")
   (deposit "B" 10 "B_deposit_Bitcoin")
-  (deposit "M" 10 "B_deposit_Bitcoin")
+  (deposit "M" 10 "M_deposit_Bitcoin")
   (secret "A" StepSecret_A__L_ "__HASH__PLACEHOLDER__")
   (secret "B" StepSecret_B__L_ "__HASH__PLACEHOLDER__")
   (secret "M" StepSecret_M__L_ "__HASH__PLACEHOLDER__")
