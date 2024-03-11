@@ -4,6 +4,8 @@ import Syntax.Common ( P(..) )
 import Syntax.BitMLx
 import Data.Ratio ((%))
 
+import ExampleRunner (BitMLxExample(BitMLxExample))
+
 exampleName :: [Char]
 exampleName = "2PMutualTC"
 
@@ -36,3 +38,5 @@ contract =
 
 sourceAdvertisement :: ContractAdvertisement
 sourceAdvertisement = ContractAdvertisement preconditions contract
+
+example = BitMLxExample exampleName participants sourceAdvertisement

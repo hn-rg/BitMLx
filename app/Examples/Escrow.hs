@@ -1,8 +1,10 @@
-module Examples.Escrow where
+module Examples.Escrow (example) where
 
 import Syntax.Common ( P(..), Pred (PEq, PAnd, PBtwn, PNeq), E (ELength, EInt) )
 import Syntax.BitMLx
 import Coins
+
+import ExampleRunner (BitMLxExample(BitMLxExample))
 
 exampleName :: [Char]
 exampleName = "Escrow"
@@ -39,3 +41,5 @@ resolve v v' =
 
 sourceAdvertisement :: ContractAdvertisement
 sourceAdvertisement = ContractAdvertisement preconditions contract
+
+example = BitMLxExample exampleName participants sourceAdvertisement
