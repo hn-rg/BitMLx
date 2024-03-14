@@ -1,6 +1,6 @@
 """This scipt is used to replace specified placeholders(string) in a file(stored under ./output) with hashed random strings.
 Usage:
-      (bash) python3 replace_hash.py <filename>
+      (bash) python3 replace_hash.py <./output/filename>
 """
 
 import re
@@ -15,10 +15,10 @@ If filename not given in the bash code, program exit with error message.
 """
 args = sys.argv
 if (len(args) < 2):
-  sys.exit("No filename given!")
-param_filename = args[1] 
+  sys.exit("No file path given!")
+param_file_path = args[1] 
 
-def in_file_replace(filename, hash_placeholders_list=[f"__HASH__PLACEHOLDER__", f"__SOME_HASH__"]):
+def in_file_replace(filepath, hash_placeholders_list=[f"__HASH__PLACEHOLDER__", f"__SOME_HASH__"]):
   """Replace specified placeholders in a file.
 
   This function reads the contents of a file, store the content in a string, 
@@ -36,18 +36,18 @@ def in_file_replace(filename, hash_placeholders_list=[f"__HASH__PLACEHOLDER__", 
   
   """
   try:
-    with open(filename, "r") as f:
+    with open(filepath, "r") as f:
       racket_code = f.read()
 
     modified_code = replace_strings(racket_code, hash_placeholders_list)
 
-    with open(filename, "w") as f:
+    with open(filepath, "w") as f:
       f.write(modified_code)
 
-    print(f"Successfully modified strings in '{filename}'.")
+    print(f"Successfully modified strings in '{filepath}'.")
 
   except FileNotFoundError:
-    print(f"Error: File '{filename}' not found.")
+    print(f"Error: File '{filepath}' not found.")
 
 
 def replace_strings(racket_code, placeholders):
@@ -89,5 +89,4 @@ def generate_random_string(result_length=30):
 
 
 """call the hash replacing function"""
-filepath = './output/' + param_filename
-in_file_replace(filepath)
+in_file_replace(param_file_path)
