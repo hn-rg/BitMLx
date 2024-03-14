@@ -21,10 +21,7 @@ param_file_path = args[1]
 def in_file_replace(filepath, hash_placeholders_list=[f"__HASH__PLACEHOLDER__", f"__SOME_HASH__"]):
   """Replace specified placeholders in a file.
 
-  This function reads the contents of a file, store the content in a string, 
-      then pass the string to the 'replace_string' function to replace the placholders.
-      The modified string is then stroed back to the file. If no error shows up, 
-      the function prints a message of successfullly modofied.
+  This function replaces all hash placeholders in a file with an actual hash of a secret.
 
   Args:
       filepath (str): The path of the file (under ./output) to modify.
