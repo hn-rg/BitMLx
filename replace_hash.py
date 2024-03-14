@@ -9,9 +9,9 @@ import string
 import sys
 from hashlib import sha256
 
-"""Read arguments in bash and store the filename in a variable.
+"""Read arguments in bash and store the filepath in a variable.
 
-If filename not given in the bash code, program exit with error message.
+If filepath not given in the bash code, program exit with error message.
 """
 args = sys.argv
 if (len(args) < 2):
@@ -27,7 +27,7 @@ def in_file_replace(filepath, hash_placeholders_list=[f"__HASH__PLACEHOLDER__", 
       the function prints a message of successfullly modofied.
 
   Args:
-      filename (str): The name of the file (stored under ./output) to modify.
+      filepath (str): The path of the file (under ./output) to modify.
       hash_placeholders_list (list, optional): A list of placeholders to be replaces, default as
           ["__HASH__PLACEHOLDER__", "__SOME_HASH__"].
 
