@@ -9,15 +9,6 @@ import string
 import sys
 from hashlib import sha256
 
-"""Read arguments in bash and store the filepath in a variable.
-
-If filepath not given in the bash code, program exit with error message.
-"""
-args = sys.argv
-if (len(args) < 2):
-  sys.exit("No file path given!")
-param_file_path = args[1] 
-
 def in_file_replace(filepath, hash_placeholders_list=[f"__HASH__PLACEHOLDER__", f"__SOME_HASH__"]):
   """Replace specified placeholders in a file.
 
@@ -85,5 +76,16 @@ def generate_random_string(result_length=30):
   return result
 
 
-"""call the hash replacing function"""
-in_file_replace(param_file_path)
+"""Execute as main module (only if run as a script)
+
+Read arguments in bash. If file path not given, program exits with error message. 
+Otherwise it executes the hash replacing function.
+"""
+if __name__ == "__main__":
+  args = sys.argv
+
+  if (len(args) < 2):
+    sys.exit("No file path given!")
+  param_file_path = args[1] 
+
+  in_file_replace(param_file_path)
