@@ -5,7 +5,7 @@ This script is used for pipelining all executions on files stored under "./outpu
 The pipline: 
     1. Run the Bitmlx compiler
     2. Replace all hash placeholders with actual hashes
-    3. Compile each modified contract and store result in corresponding .blz files
+    3. Compile each modified contract and store result in corresponding .balzac files
 
 Usage: 
     ./BitMLx_pipeline.sh
@@ -17,7 +17,7 @@ stack run || {
 }
 
 file_ext=".rkt"
-result_ext=".blz"
+result_ext=".balzac"
 racket_dir_path="./output"
 
 for file_path in $racket_dir_path/*$file_ext
