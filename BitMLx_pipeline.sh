@@ -1,10 +1,10 @@
 #!/bin/sh
 <<COMMENT
-This script is used to pipelining all executions on files stored under "./output".
+This script is used for pipelining all executions on files stored under "./output".
 
 The pipline: 
     1. Run the Bitmlx compiler
-    2. Replace all hashes with python script
+    2. Replace all hash placeholders with actual hashes
     3. Compile each modified contract and store result in corresponding .blz files
 
 Usage: 
@@ -12,7 +12,7 @@ Usage:
 COMMENT
 
 stack run || {
-    echo "Error: stack run failed."
+    echo "Error: BitMLx compiler failed."
     exit 1
 }
 
