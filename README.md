@@ -12,6 +12,14 @@ The relevant folders in the project are:
 - `app/`: source code for the example app, including examples  of haskell-embedded BitMLx contracts.
 - `output/`: racket-embedded BitML contracts corresponding to the compilation results of the example contracts.
 
+## Prerequisites
+
+Before installing the BitMLx compiler, you should check if the following tools are installed on your device:
+
+- `The BitML compiler`: Our BitMLx compiler is based on the original BitML compiler, so installing it first is essential. Follow the [BitML compiler instruction](https://github.com/bitml-lang/bitml-compiler) to install the tool.
+- `LLVM`: [LLVM](https://llvm.org) enhances portability and optimization of Haskell programs. It is required by the [GHC](https://www.haskell.org/ghc/) compiler. To install `LLVM` on Ubuntu: run `sudo apt install llvm`
+- `numa`: the library is required when linking the Haskell program. Install it on Ubuntu using: `sudo apt-get install libnuma-dev`
+  
 
 ## Intructions
 
