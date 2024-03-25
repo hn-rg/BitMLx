@@ -18,7 +18,7 @@ Before installing the BitMLx compiler, you should check if the following tools a
 
 - `The BitML compiler`: Our BitMLx compiler is based on the original BitML compiler, so installing it first is essential. Follow the [BitML compiler instruction](https://github.com/bitml-lang/bitml-compiler) to install the tool.
 - `LLVM`: [LLVM](https://llvm.org) enhances portability and optimization of Haskell programs. It is required by the [GHC](https://www.haskell.org/ghc/) compiler. To install `LLVM` on Ubuntu: run `sudo apt install llvm`
-- `numa`: the library is required when linking the Haskell program. Install it on Ubuntu using: `sudo apt-get install libnuma-dev`
+- `numa`: [This library](https://man7.org/linux/man-pages/man3/numa.3.html) is required when linking the Haskell program. Install it on Ubuntu using: `sudo apt-get install libnuma-dev`
   
 
 ## Intructions
@@ -29,7 +29,7 @@ Install [stack](https://docs.haskellstack.org/en/stable/) and clone the repo. Th
 - `stack run` builds and runs the example app. This will write the output BitML contracts in the `output/` folder.
 - `stack test` runs unit tests.
 - `stack haddock --no-haddock-deps bitmlx --open` build the documentation and opens it in your web browser. Probably a good entry point!
-- `./BitMLx_pipeline.sh` executes the BitMLx pipline:
+- `./BitMLx_pipeline.sh` executes the following pipline:
   - Run the BitMLx compiler.
   - Replace hash placeholders in racket-BitML contracts.
   - Compile the racket-BitML contracts and store the outputs in new generated files with '.balzac' extension.
