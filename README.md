@@ -29,6 +29,10 @@ Install [stack](https://docs.haskellstack.org/en/stable/) and clone the repo. Th
 - `stack run` builds and runs the example app. This will write the output BitML contracts in the `output/` folder.
 - `stack test` runs unit tests.
 - `stack haddock --no-haddock-deps bitmlx --open` build the documentation and opens it in your web browser. Probably a good entry point!
+- `./BitMLx_pipeline.sh` executes the BitMLx pipline:
+  - Run the BitMLx compiler.
+  - Replace hash placeholders in racket-BitML contracts.
+  - Compile the racket-BitML contracts and store the outputs in new generated files with '.balzac' extension.
 
 
 ## About the Unit Tests
