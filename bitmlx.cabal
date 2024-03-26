@@ -54,6 +54,7 @@ executable bitmlx-exe
     Examples.MutualTC
     Examples.NaiveExchangeLottery
     Examples.ReceiverChosenDenomination
+    Examples.TwoPartyAgreement
     ExampleRunner
   build-depends:
       base >=4.7 && <5
