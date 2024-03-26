@@ -7,6 +7,7 @@ import qualified Examples.NaiveExchangeLottery as NaiveExchangeLottery
 import qualified Examples.SimpleExchange as SimpleExchange
 import qualified Examples.ReceiverChosenDenomination as ReceiverChosenDenomination
 import qualified Examples.TwoPartyAgreement as TwoPartyAgreement
+import qualified Examples.MultichainPaymentExchange as MultichainPaymentExchange
 
 main :: IO ()
 main = do
@@ -16,3 +17,4 @@ main = do
     runExample SimpleExchange.example
     runExample ReceiverChosenDenomination.example
     runExample TwoPartyAgreement.example
+    runExample MultichainPaymentExchange.example
