@@ -26,7 +26,7 @@ do
     result_path="${file_path%${file_ext}}${result_ext}"
     echo "\nReplacing placeholders in $file_path"
     python3 replace_hash.py ${file_path}
-    
+
     echo "Compiling $file_path"
     racket ${file_path} > ${result_path} || {
         echo "Error: Failed to compile $file_path"
