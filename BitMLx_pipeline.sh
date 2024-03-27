@@ -11,6 +11,7 @@ Usage:
     ./BitMLx_pipeline.sh
 COMMENT
 
+echo "Started BitMlx pipelining. \nRunning the BitMLx compiler..."
 stack run || {
     echo "Error: BitMLx compiler failed."
     exit 1
@@ -23,6 +24,15 @@ racket_dir_path="./output"
 for file_path in $racket_dir_path/*$file_ext
 do
     result_path="${file_path%${file_ext}}${result_ext}"
+    echo "\nReplacing placeholders in $file_path"
     python3 replace_hash.py ${file_path}
-    racket ${file_path} > ${result_path}
+
+    echo "Compiling $file_path"
+    racket ${file_path} > ${result_path} || {
+        echo "Error: Failed to compile $file_path"
+        exit 1
+    }
+    echo "Successfully compiled $file_path"
 done
+
+echo "\nFinished BitMLx pipelining!"
