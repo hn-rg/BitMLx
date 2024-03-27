@@ -48,3 +48,9 @@ Current unit tests have the following component:
 If you want to write your own BitMLx contracts: 
 
 - `stack haddock --no-haddock-deps bitmlx --open` build the documentation and opens it in your web browser. Probably a good entry point!
+- `app/Examples/`: where to place your new BitMLx contracts. Attention: the contracts should have the `.hs` extention.
+- You should register your new contracts in the following files:
+  - `app/Main.hs`: the entrance of the Haskell program. Follow the existing code to register your new contracts.
+  - `bitmlx.cabal`:
+    - Find the section of `executable bitmlx-exe`.
+    - Add your contracts in `other-modules`.
