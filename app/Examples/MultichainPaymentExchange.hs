@@ -1,6 +1,6 @@
 module Examples.MultichainPaymentExchange where
 
-import Syntax.Common ( P(..), Pred (PEq, PAnd, PBtwn, PNeq), E (ELength, EInt) )
+import Syntax.Common ( P(..) )
 import Syntax.BitMLx
 import Data.Ratio ((%))
 
