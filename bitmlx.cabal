@@ -56,6 +56,7 @@ executable bitmlx-exe
     Examples.ReceiverChosenDenomination
     Examples.TwoPartyAgreement
     Examples.MultichainPaymentExchange
+    Examples.MultichainLoanMediator
     ExampleRunner
   build-depends:
       base >=4.7 && <5
