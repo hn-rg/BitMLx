@@ -34,7 +34,10 @@ contract =
         ((10, 0), pX),
         ((0, 100), pR)
     ]
-    +> WithdrawAll pC
+    +> Withdraw [
+        ((10, 0), pC),
+        ((0, 100), pX)
+    ]
 
 
 sourceAdvertisement :: ContractAdvertisement
