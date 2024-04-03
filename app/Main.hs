@@ -5,6 +5,10 @@ import qualified Examples.Escrow as Escrow
 import qualified Examples.MutualTC as MutualTC
 import qualified Examples.NaiveExchangeLottery as NaiveExchangeLottery
 import qualified Examples.SimpleExchange as SimpleExchange
+import qualified Examples.ReceiverChosenDenomination as ReceiverChosenDenomination
+import qualified Examples.TwoPartyAgreement as TwoPartyAgreement
+import qualified Examples.MultichainPaymentExchange as MultichainPaymentExchange
+import qualified Examples.MultichainLoanMediator as MultichainLoanMediator
 
 main :: IO ()
 main = do
@@ -12,3 +16,7 @@ main = do
     runExample MutualTC.example
     runExample NaiveExchangeLottery.example
     runExample SimpleExchange.example
+    runExample ReceiverChosenDenomination.example
+    runExample TwoPartyAgreement.example
+    runExample MultichainPaymentExchange.example
+    runExample MultichainLoanMediator.example
