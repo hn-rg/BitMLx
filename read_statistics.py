@@ -101,6 +101,10 @@ def read_rkt_stats(fpath):
 def gen_stats(dpath, flist):
     """ Generate a statistics summary based on statistics of all files in ./output.
 
+    As the Bit- and Dogecoin contracts from the same BitMLx contact contain the same value for 
+    the required statistics, in this function, when reading a new file under the same BitMLx 
+    contract, it will rewrite / append the statistics of the contract.
+
     Args:
         dpath(str): The directory path (./output) containing the files with required statistics.
         flist(List of str): A list of filename. The files contain the required statistics.
