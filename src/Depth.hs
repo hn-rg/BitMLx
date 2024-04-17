@@ -18,5 +18,5 @@ depthD d = case d of
     PutRevealIf depositIds secrets pred contract -> 1 + (depthC contract)
     Withdraw p -> 1
     Auth ps guardedContract -> 1 + (depthD guardedContract)
-    Split subcontracts -> sum [depthC contract | (_, contract) <- subcontracts]
+    Split subcontracts -> 1 + sum [depthC contract | (_, contract) <- subcontracts]
     After time guardedContract -> depthD guardedContract
