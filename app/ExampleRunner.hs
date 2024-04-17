@@ -28,7 +28,7 @@ runExample BitMLxExample {exampleName, participants, sourceAdvertisement} = case
             let            
                 bitcoinOutPath = "output/" ++ exampleName ++ "_bitcoin.rkt"
                 dogecoinOutPath = "output/" ++ exampleName ++ "_dogecoin.rkt"
-                timeoutPath = "output/" ++ exampleName ++ "_timeout.txt"
+                timeoutPath = "output/" ++ exampleName ++ "_depth.txt"
 
                 bitcoinDoc = prettyprintNL participants bitcoinPreconditions bitcoinContract 
                 dogecoinDoc = prettyprintNL participants dogecoinPreconditions dogecoinContract
