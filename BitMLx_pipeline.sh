@@ -6,7 +6,7 @@ The pipline:
     1. Run the Bitmlx compiler.
     2. Replace all hash placeholders with actual hashes.
     3. Compile each modified contract and store result in corresponding .balzac files.
-    4. Read statistics from files and generate a table based on teh statistics.
+    4. Read statistics from files and generate a table based on them.
 
 Usage: 
     ./BitMLx_pipeline.sh
