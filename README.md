@@ -19,7 +19,10 @@ Before installing the BitMLx compiler, you should check if the following tools a
 - `The BitML compiler`: Our BitMLx compiler is based on the original BitML compiler, so installing it first is essential. Follow the [BitML compiler instruction](https://github.com/bitml-lang/bitml-compiler) to install the tool.
 - `LLVM`: [LLVM](https://llvm.org) enhances portability and optimization of Haskell programs. It is required by the [GHC](https://www.haskell.org/ghc/) compiler. To install `LLVM` on Ubuntu: `sudo apt install llvm`
 - `numa`: [This library](https://man7.org/linux/man-pages/man3/numa.3.html) is required when linking the Haskell program. Install it on Ubuntu: `sudo apt-get install libnuma-dev`
-  
+- `python3`: The pipeline of our tool is written in Python 3 (any version is fine).
+- `pip`: Used to install external Python packages.
+- `prettytable`: An external package to generate formatted table. It is used in our tool to create a table based on contract statistics. Install it using: `pip install prettytable`.
+
 
 ## Intructions
 

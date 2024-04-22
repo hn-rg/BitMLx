@@ -37,6 +37,7 @@ library
     Compiler.Withdraw
     Compiler.WellFormed
     Pretty
+    Depth
   build-depends: 
     prettyprinter,
     vector,      
